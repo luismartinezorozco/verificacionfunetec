@@ -150,7 +150,7 @@
                 <!-- Sección: Excel Masivo -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-sm font-bold text-gray-800 mb-2">Generación Masiva (Excel)</h3>
-                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba, luego sube un Excel con columnas <b>"Nombre"</b> y <b>"Cedula"</b> para exportar todo y guardarlo en la Base de Datos Firebase.</p>
+                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba (o incluye una columna <b>"Curso"</b> en tu Excel), y sube el archivo con columnas <b>"Nombre"</b> y <b>"Cedula"</b>.</p>
                     <input type="file" id="uploadExcel" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 mb-3 border border-gray-200 rounded p-1" />
                     
                     <div id="bulkButtonsContainer" class="hidden flex-col gap-2">
@@ -449,16 +449,35 @@
             }
 
             container.innerHTML = filtered.map(r => `
-                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex justify-between items-center group hover:bg-red-50 transition-colors">
-                    <div class="overflow-hidden pr-2">
+                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex justify-between items-center group hover:bg-red-50 transition-colors cursor-pointer" onclick="fillUserData('${r.name.replace(/'/g, "\\'")}', '${r.id}')" title="Clic para cargar datos del estudiante">
+                    <div class="overflow-hidden pr-2 flex-1">
                         <p class="text-[10px] font-bold text-gray-800 truncate" title="${r.name}">${r.name}</p>
                         <p class="text-[9px] text-gray-500 truncate" title="${r.course}">C.C. ${r.id} | ${r.course}</p>
                     </div>
-                    <button onclick="deleteRecord('${r.docId}')" class="text-gray-400 hover:text-red-600 p-1 rounded transition-colors shrink-0" title="Eliminar registro">
+                    <button onclick="event.stopPropagation(); deleteRecord('${r.docId}')" class="text-gray-400 hover:text-red-600 p-1 rounded transition-colors shrink-0" title="Eliminar registro">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
             `).join('');
+        };
+
+        // --- FUNCIÓN DE AUTOCOMPLETADO (NUEVA) ---
+        window.fillUserData = function(name, id) {
+            state.name = name;
+            state.id = id;
+            updateDisplay();
+            // Desplazar visualmente hacia arriba por si el panel es muy largo
+            document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Animación visual suave para indicar que se llenó
+            const inputNameEl = document.getElementById('inputName');
+            const inputIdEl = document.getElementById('inputId');
+            inputNameEl.classList.add('bg-green-100');
+            inputIdEl.classList.add('bg-green-100');
+            setTimeout(() => {
+                inputNameEl.classList.remove('bg-green-100');
+                inputIdEl.classList.remove('bg-green-100');
+            }, 500);
         };
 
         window.deleteRecord = async function(docId) {
@@ -645,26 +664,55 @@
                 const headers = rows[0].map(h => String(h).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
                 const nameIdx = headers.findIndex(h => h.includes('nombre'));
                 const idIdx = headers.findIndex(h => h.includes('cedula') || h.includes('identificacion'));
+                const courseIdx = headers.findIndex(h => h.includes('curso')); // Nueva detección de columna Curso
 
                 if(nameIdx === -1) {
                     alert("No se encontró la columna 'Nombre' en la primera fila del Excel.");
                     return;
                 }
 
-                state.bulkStudents = [];
+                // Filtrar duplicados y agrupar
+                let duplicatesCount = 0;
+                const studentMap = new Map();
+
                 for(let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     if(row[nameIdx]) {
-                        state.bulkStudents.push({
-                            name: String(row[nameIdx]).trim(),
-                            id: idIdx !== -1 && row[idIdx] ? String(row[idIdx]).trim() : ''
-                        });
+                        const name = String(row[nameIdx]).trim();
+                        const id = idIdx !== -1 && row[idIdx] ? String(row[idIdx]).trim() : '';
+                        const rowCourse = courseIdx !== -1 && row[courseIdx] ? String(row[courseIdx]).trim() : state.course; // Usa el curso del Excel o el general
+
+                        const uniqueKey = `${id}_${rowCourse}`; // Clave única: Cedula + Curso
+                        
+                        if (studentMap.has(uniqueKey)) {
+                            duplicatesCount++; // Se encontró un duplicado exacto
+                        } else {
+                            studentMap.set(uniqueKey, { name, id, course: rowCourse });
+                        }
                     }
                 }
 
+                state.bulkStudents = Array.from(studentMap.values());
+
+                // Detectar usuarios con múltiples cursos distintos
+                const idCounts = {};
+                state.bulkStudents.forEach(s => {
+                    if(s.id) idCounts[s.id] = (idCounts[s.id] || 0) + 1;
+                });
+                const multipleCoursesCount = Object.values(idCounts).filter(count => count > 1).length;
+
                 if(state.bulkStudents.length > 0) {
                     document.getElementById('bulkButtonsContainer').classList.remove('hidden');
-                    alert(`¡Éxito! Se encontraron ${state.bulkStudents.length} estudiantes listos para exportar y guardar en BD.`);
+                    
+                    let msg = `¡Éxito! Se detectaron ${state.bulkStudents.length} certificados listos para generar.`;
+                    if (duplicatesCount > 0) {
+                        msg += `\n\n- Omitimos ${duplicatesCount} registro(s) duplicado(s) (mismo alumno con el mismo curso).`;
+                    }
+                    if (multipleCoursesCount > 0) {
+                        msg += `\n- Tienes ${multipleCoursesCount} estudiante(s) con múltiples cursos distintos asignados correctamente.`;
+                    }
+                    
+                    alert(msg);
                 } else {
                     alert("No se encontraron estudiantes válidos en el archivo.");
                     document.getElementById('bulkButtonsContainer').classList.add('hidden');
@@ -688,6 +736,7 @@
             
             const originalName = state.name;
             const originalId = state.id;
+            const originalCourse = state.course; // Guardar curso original
             const originalTransform = scaleWrapper.style.transform;
             
             scaleWrapper.style.transform = 'none'; 
@@ -699,6 +748,7 @@
 
                     state.name = student.name;
                     state.id = student.id;
+                    state.course = student.course || originalCourse; // Asignar el curso específico del Excel
                     updateDisplay();
                     
                     // Guardar en la Base de Datos Firebase
@@ -724,7 +774,9 @@
                     pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
                     
                     const safeName = student.name.replace(/[^a-z0-9]/gi, '_').toUpperCase();
-                    zip.file(`CERTIFICADO_${safeName}.pdf`, pdf.output('blob'));
+                    // Agregar número aleatorio si hay múltiples cursos para no sobrescribir el PDF en el ZIP
+                    const randomSuffix = Math.floor(Math.random() * 1000); 
+                    zip.file(`CERTIFICADO_${safeName}_${randomSuffix}.pdf`, pdf.output('blob'));
                 }
 
                 loadText.textContent = "Comprimiendo archivo ZIP...";
@@ -737,6 +789,7 @@
             } finally {
                 state.name = originalName;
                 state.id = originalId;
+                state.course = originalCourse; // Restaurar curso
                 updateDisplay();
                 scaleWrapper.style.transform = originalTransform;
                 overlay.classList.add('hidden');
@@ -750,14 +803,16 @@
 
             const overlay = document.getElementById('loadingOverlay');
             const loadText = document.getElementById('loadingText');
+            const originalCourse = state.course;
             overlay.classList.remove('hidden');
             
             try {
                 for(let i = 0; i < state.bulkStudents.length; i++) {
                     const student = state.bulkStudents[i];
                     loadText.textContent = `Subiendo a la nube: ${i + 1} de ${state.bulkStudents.length}...`;
-
-                    // Guardar en la Base de Datos Firebase (sin modificar la parte visual)
+                    
+                    // Actualizamos state.course en memoria para que saveToDB use el curso correcto
+                    state.course = student.course || originalCourse;
                     await window.saveToDB(student.name, student.id);
                 }
                 alert("¡Todos los certificados masivos se subieron exitosamente a la nube!");
@@ -765,6 +820,7 @@
                 console.error(error);
                 alert("Hubo un error subiendo los archivos a la nube. Verifica la consola.");
             } finally {
+                state.course = originalCourse; // Restaurar curso
                 overlay.classList.add('hidden');
                 await window.loadDBRecords(); // Refrescar lista lateral después del proceso masivo
             }
