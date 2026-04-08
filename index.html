@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUNETEC - Portal de Certificaciones</title>
+    <link rel="icon" href="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" type="image/png">
+    
+    <!-- Librerías para Generación Masiva -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .font-serif-title { font-family: 'Times New Roman', Times, serif; }
+        .font-sans-body { font-family: Arial, Helvetica, sans-serif; }
+        @media print {
+            @page { size: letter landscape; margin: 0; }
+            body { margin: 0; padding: 0; background: white; }
+            .no-print { display: none !important; }
+            #previewWrapper { display: block !important; padding: 0 !important; background: white !important; overflow: visible !important; position: static !important; }
+            #documentScaleWrapper { position: static !important; transform: none !important; left: auto !important; top: auto !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; }
+            .print-container { width: 100vw !important; height: 100vh !important; max-width: none !important; box-shadow: none !important; padding: 2rem !important; margin: 0 !important; }
+            svg circle, svg path { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+        .hidden { display: none !important; }
+        
+        /* Spinner de carga */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d32f2f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-900 overflow-hidden">
+    
+    <!-- Pantalla de Carga de Proceso Masivo -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-900 bg-opacity-80 backdrop-blur-sm text-white no-print">
+        <div class="loader mb-4"></div>
+        <h2 class="text-xl font-bold mb-2">Generando Certificados...</h2>
+        <p id="loadingText" class="text-sm text-gray-300">Por favor, espera un momento. No cierres esta ventana.</p>
+    </div>
+
+    <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
+    <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print">
+        <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
+            <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" class="h-32 mx-auto mb-6 object-contain" />
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Institucional</h2>
+            <p class="text-sm text-gray-500 mb-8">Seleccione el módulo al que desea acceder.</p>
+            
+            <div class="space-y-4">
+                <button onclick="showScreen('verificationScreen')" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-red-600 hover:bg-red-50 text-gray-800 font-bold py-4 px-4 rounded-xl transition-all shadow-sm group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 group-hover:text-red-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Verificar Certificado
+                </button>
+                <button onclick="showScreen('loginScreen')" class="w-full flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Acceso Administrativo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PANTALLA DE VERIFICACIÓN (PÚBLICA) -->
+    <div id="verificationScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
+            <button onclick="showScreen('welcomeScreen')" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-red-600 mb-6 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Volver
+            </button>
+            
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Verificación en Línea</h2>
+            <p class="text-xs text-gray-500 mb-6">Ingrese el número de cédula del estudiante para consultar la validez de su certificado.</p>
+            
+            <form id="verifyForm" class="space-y-4">
+                <div class="relative">
+                    <input type="text" id="verifyIdInput" required placeholder="Número de Cédula" class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none text-sm transition-all" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-3.5 text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar</button>
+            </form>
+
+            <!-- Contenedor de Resultados -->
+            <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200">
+                <!-- Se inyectarán los resultados desde JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. PANTALLA DE LOGIN (PRIVADA) -->
+    <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm no-print">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center relative">
+            <button onclick="showScreen('welcomeScreen')" class="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+            
+            <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" class="h-28 mx-auto mb-6 mt-2 object-contain" />
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Acceso Restringido</h2>
+            <p class="text-xs text-gray-500 mb-6">Área exclusiva para personal administrativo.</p>
+            
+            <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">Clave incorrecta.</div>
+            
+            <form id="loginForm" class="space-y-4">
+                <input type="password" id="loginPass" required placeholder="Contraseña de Administrador" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm transition-all" />
+                <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Ingresar al Generador</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. APLICACIÓN PRINCIPAL GENERADOR -->
+    <div id="mainApp" class="hidden flex-col md:flex-row h-screen">
+        
+        <div id="sidebar" class="no-print w-full md:w-[26rem] bg-white border-r border-gray-200 p-6 shadow-lg flex flex-col z-20 h-full overflow-y-auto shrink-0">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Panel Administrativo</h2>
+                <button onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-800 underline">Cerrar Sesión</button>
+            </div>
+            
+            <div class="space-y-4 flex-1">
+                <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre Completo</label><input type="text" id="inputName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Cédula de Ciudadanía</label><input type="text" id="inputId" name="id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre del Curso</label><textarea id="inputCourse" name="course" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm font-medium"></textarea></div>
+                <div class="flex gap-3">
+                    <div class="w-1/3"><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Horas</label><input type="number" id="inputHours" name="hours" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                    <div class="w-2/3">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Vigencia</label>
+                        <div class="flex gap-2">
+                            <select id="inputValidityType" name="validityType" class="flex-1 px-2 py-[9px] border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-[13px] font-medium bg-white">
+                                <option value="aplica">Aplica (Años)</option>
+                                <option value="no caduca">No caduca</option>
+                                <option value="ocultar">No aplica</option>
+                            </select>
+                            <input type="number" id="inputValidityYears" name="validityYears" min="1" class="w-16 px-2 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium text-center" />
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Día</label><input type="text" id="inputDay" name="day" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Mes</label><input type="text" id="inputMonth" name="month" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Año</label><input type="text" id="inputYear" name="year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                </div>
+
+                <!-- Sección: Excel Masivo -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-800 mb-2">Generación Masiva (Excel)</h3>
+                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba, luego sube un Excel con columnas <b>"Nombre"</b> y <b>"Cedula"</b> para exportar todo y guardarlo en la Base de Datos.</p>
+                    <input type="file" id="uploadExcel" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 mb-3 border border-gray-200 rounded p-1" />
+                    <button id="btnBulkGenerate" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Descargar ZIP y Guardar (<span id="bulkCount">0</span> cert.)
+                    </button>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">Configuración de Firmas</h3>
+                    <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <h4 class="text-xs font-bold text-gray-700 mb-2">Firma Izquierda</h4>
+                        <div class="space-y-2">
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Nombre</label><input type="text" id="inputSign1Name" name="sign1Name" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Cargo</label><input type="text" id="inputSign1Role" name="sign1Role" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Subir Imagen</label><input type="file" id="uploadSign1" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300" /></div>
+                            <div class="pt-2 border-t border-gray-200 mt-2">
+                                <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Tamaño (%)</label><input type="range" id="inputSign1Size" name="sign1Size" min="20" max="300" value="100" class="w-full accent-red-600" />
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↔ (X)</label><input type="range" id="inputSign1X" name="sign1X" min="-150" max="150" value="0" class="w-full accent-red-600" /></div>
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↕ (Y)</label><input type="range" id="inputSign1Y" name="sign1Y" min="-100" max="100" value="0" class="w-full accent-red-600" /></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <h4 class="text-xs font-bold text-gray-700 mb-2">Firma Derecha</h4>
+                        <div class="space-y-2">
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Nombre</label><input type="text" id="inputSign2Name" name="sign2Name" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Cargo</label><input type="text" id="inputSign2Role" name="sign2Role" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Subir Imagen</label><input type="file" id="uploadSign2" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300" /></div>
+                            <div class="pt-2 border-t border-gray-200 mt-2">
+                                <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Tamaño (%)</label><input type="range" id="inputSign2Size" name="sign2Size" min="20" max="300" value="100" class="w-full accent-red-600" />
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↔ (X)</label><input type="range" id="inputSign2X" name="sign2X" min="-150" max="150" value="0" class="w-full accent-red-600" /></div>
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↕ (Y)</label><input type="range" id="inputSign2Y" name="sign2Y" min="-100" max="100" value="0" class="w-full accent-red-600" /></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">Datos de Contacto</h3>
+                    <div class="space-y-3">
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Correo Electrónico</label><input type="text" id="inputEmail" name="email" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Dirección</label><input type="text" id="inputAddress" name="address" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Teléfono</label><input type="text" id="inputPhone" name="phone" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón Individual Modificado -->
+            <button onclick="printAndSaveIndividual()" class="mt-6 w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Imprimir y Guardar en BD
+            </button>
+        </div>
+
+        <!-- VISTA PREVIA (DOCUMENTO) -->
+        <div id="previewWrapper" class="flex-1 relative overflow-hidden bg-gray-300 z-10">
+            <button onclick="toggleSidebar()" class="absolute top-4 right-4 z-50 bg-white/90 backdrop-blur p-2.5 rounded-lg shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-black transition-all flex items-center gap-2 no-print">
+                <svg id="iconCollapse" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                <svg id="iconExpand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+                <span id="textToggleSidebar" class="text-sm font-semibold hidden sm:block">Ocultar Panel</span>
+            </button>
+
+            <div id="documentScaleWrapper" class="absolute top-1/2 left-1/2 origin-center transition-transform duration-200 ease-out" style="width: 1056px; height: 816px;">
+                <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-12 pb-10 px-16 font-sans-body">
+                    
+                    <div class="text-center w-full relative z-10">
+                        <div class="flex flex-col items-center">
+                            <div class="mb-4 mt-2"><img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" class="h-32 w-auto mx-auto object-contain" crossorigin="anonymous" /></div>
+                            <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-0">Institución de Educación</h1>
+                            <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-3">para el Trabajo y Desarrollo Humano</h1>
+                            <p class="text-[11px] text-gray-700 font-normal tracking-normal mb-0">Aprobado por la Secretaría de Educación Distrital de Barranquilla mediante Resolución N° 06077 del 19 de octubre de 2023.</p>
+                            <p class="text-[11px] text-gray-700 font-normal tracking-normal mt-0">Educación para el Trabajo y Desarrollo Humano.</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center w-full relative z-10 flex flex-col items-center mt-4">
+                        <p class="text-[15px] text-black font-normal mb-4">Hace constar que :</p>
+                        <h2 id="displayName" class="font-serif-title font-bold text-[2.4rem] tracking-wide text-black mb-4 uppercase min-h-[3rem]"></h2>
+                        <p class="text-[12px] text-black font-normal mb-4">Identificado con cédula de ciudadanía N.° <span id="displayId"></span></p>
+                        <p class="text-[15px] text-black font-normal mb-2">Aprobó el curso de:</p>
+                        <h2 id="displayCourse" class="font-serif-title font-bold text-[2.1rem] tracking-wide text-black uppercase mb-4 px-12 leading-tight min-h-[2.5rem]"></h2>
+                    </div>
+
+                    <div class="flex justify-between items-end px-4 mt-6 w-full relative z-10 max-w-5xl mx-auto">
+                        <div class="w-64 text-center">
+                            <div id="sign1ImageContainer" class="h-16 flex items-end justify-center mb-1 relative overflow-visible">
+                                <svg viewBox="0 0 200 80" class="w-48 h-full opacity-80 object-contain relative z-10" stroke="black" fill="none"><path d="M 40,60 C 20,40 50,20 60,30 C 70,40 40,70 60,60 C 80,50 90,40 100,50 C 110,60 100,70 120,60 C 140,50 160,30 150,20 C 140,10 130,40 140,50 C 150,60 170,40 180,30" stroke-width="1.5" stroke-linecap="round" /></svg>
+                            </div>
+                            <div class="border-t border-black w-full mb-1 relative z-20"></div>
+                            <p id="displaySign1Name" class="font-bold text-[10px] text-black uppercase m-0 leading-tight"></p>
+                            <p id="displaySign1Role" class="text-[10px] text-black m-0 leading-tight"></p>
+                        </div>
+
+                        <div class="flex-1 text-center text-[12px] text-gray-800 pb-5 px-4 font-normal">
+                            <p class="mb-1">Con una duración de ( <span id="displayHours"></span> horas).</p>
+                            <p class="mb-1">Dado en Barranquilla, a los <span id="displayDay"></span> de <span id="displayMonth"></span> de <span id="displayYear"></span></p>
+                            <p id="validityContainer" class="mb-0">( <span id="displayValidity"></span> )</p>
+                        </div>
+
+                        <div class="w-64 text-center">
+                            <div id="sign2ImageContainer" class="h-16 flex items-end justify-center mb-1 relative overflow-visible">
+                                <svg viewBox="0 0 200 80" class="w-48 h-full opacity-80 object-contain relative z-10" stroke="black" fill="none"><path d="M 30,70 L 80,20 L 60,60 L 100,30 L 90,60 L 130,40 L 120,60 L 160,30 C 170,40 160,70 170,60 C 180,50 190,40 180,30" stroke-width="1.5" stroke-linecap="round" /><path d="M 160,40 C 170,30 180,70 160,60 C 140,50 180,20 190,40" stroke-width="1.5" /></svg>
+                            </div>
+                            <div class="border-t border-black w-full mb-1 relative z-20"></div>
+                            <p id="displaySign2Name" class="font-bold text-[10px] text-black uppercase m-0 leading-tight"></p>
+                            <p id="displaySign2Role" class="text-[10px] text-black m-0 leading-tight"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-between items-center px-10 mt-4 text-[11px] font-bold text-gray-800 relative z-10 pb-2">
+                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M5.5 8C5.22 8 5 8.22 5 8.5v7c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-7c0-.28-.22-.5-.5-.5h-13zm0 1.5h13v.5l-6.5 4-6.5-4v-.5z" fill="white"/></svg><span id="displayEmail"></span></div>
+                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#d32f2f"/></svg><span id="displayAddress"></span></div>
+                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M16.9 14.44c-.78 0-1.55-.12-2.28-.36a.88.88 0 0 0-.89.21l-1.4 1.4c-1.83-.93-3.32-2.42-4.25-4.25l1.4-1.4a.88.88 0 0 0 .21-.89 6.8 6.8 0 0 1-.36-2.28c0-.49-.4-.88-.88-.88H5.38C4.9 6 4.5 6.4 4.5 6.88 4.5 13.63 10 19.12 16.75 19.12c.49 0 .88-.4.88-.88v-2.92c0-.48-.4-.88-.88-.88z" fill="white"/></svg><span id="displayPhone"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL
+        const state = { 
+            name: '', id: '', course: 'COMO PUBLICAR EN INSTAGRAM.', hours: '5', day: '1', month: 'Abril', year: '2026', 
+            validityType: 'aplica', validityYears: '2', 
+            sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, 
+            sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, 
+            email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679',
+            bulkStudents: [] 
+        };
+
+        // --- GESTIÓN DE PANTALLAS ---
+        function showScreen(screenId) {
+            ['welcomeScreen', 'verificationScreen', 'loginScreen', 'mainApp'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    if(id === screenId) {
+                        el.classList.remove('hidden');
+                        if(id === 'mainApp') el.classList.add('flex');
+                    } else {
+                        el.classList.add('hidden');
+                        if(id === 'mainApp') el.classList.remove('flex');
+                    }
+                }
+            });
+            if(screenId === 'mainApp') setTimeout(adjustScale, 100);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('funetec_auth');
+            showScreen('welcomeScreen');
+        }
+
+        // --- LÓGICA DE VERIFICACIÓN (BASE DE DATOS LOCAL) ---
+        // Guarda un estudiante en la base de datos de LocalStorage
+        function saveToDB(studentName, studentId) {
+            if(!studentName || !studentId) return;
+            
+            let db = JSON.parse(localStorage.getItem('funetec_db') || '[]');
+            
+            let isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
+            let expYear = parseInt(state.year) + parseInt(state.validityYears);
+            
+            // Eliminar registro previo si es el mismo curso y misma cédula para evitar duplicados
+            db = db.filter(record => !(record.id === String(studentId).trim() && record.course === state.course));
+            
+            db.push({
+                id: String(studentId).trim(),
+                name: String(studentName).trim().toUpperCase(),
+                course: state.course.toUpperCase(),
+                expYear: isIndefinite ? 9999 : expYear,
+                isIndefinite: isIndefinite,
+                dateAdded: new Date().toISOString()
+            });
+            
+            localStorage.setItem('funetec_db', JSON.stringify(db));
+        }
+
+        // Consulta de Verificación
+        document.getElementById('verifyForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const idToSearch = document.getElementById('verifyIdInput').value.trim();
+            const db = JSON.parse(localStorage.getItem('funetec_db') || '[]');
+            
+            // Filtrar certificados que coincidan con la cédula
+            const results = db.filter(r => r.id === idToSearch);
+            const container = document.getElementById('verifyResultsContainer');
+            
+            if(results.length > 0) {
+                // Tomar el nombre del primer resultado
+                let html = `
+                    <div class="mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 leading-tight">${results[0].name}</h3>
+                        <p class="text-xs font-semibold text-gray-500 mt-1">C.C. ${results[0].id}</p>
+                    </div>
+                    <div class="space-y-3">
+                `;
+                
+                const currentYear = new Date().getFullYear();
+                
+                // Listar todos los cursos de esa persona
+                results.forEach(cert => {
+                    let isActive = cert.isIndefinite || currentYear <= cert.expYear;
+                    let badge = isActive ? 
+                        `<span class="bg-green-100 text-green-800 border border-green-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Activo</span>` : 
+                        `<span class="bg-red-100 text-red-800 border border-red-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Vencido</span>`;
+                    
+                    html += `
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <p class="text-xs font-bold text-gray-800 mb-2 leading-tight">${cert.course}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-gray-500">Válido hasta: ${cert.isIndefinite ? 'Sin caducidad' : cert.expYear}</span>
+                                ${badge}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-red-400 mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <p class="text-sm font-bold text-red-800">No se encontraron registros</p>
+                        <p class="text-xs text-red-600 mt-1">Verifique el número de cédula ingresado.</p>
+                    </div>
+                `;
+            }
+            container.classList.remove('hidden');
+        });
+
+        // --- LÓGICA DE LOGIN ---
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            if(document.getElementById('loginPass').value === 'A7f9K2mX8Q4zT1B') {
+                document.getElementById('loginError').classList.add('hidden');
+                sessionStorage.setItem('funetec_auth', 'true');
+                showScreen('mainApp');
+                document.getElementById('loginPass').value = ''; // limpiar input
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        // --- LÓGICA DE ESCALA ---
+        function adjustScale() {
+            const w = document.getElementById('previewWrapper'), s = document.getElementById('documentScaleWrapper');
+            if(!window.matchMedia('print').matches && w && s) {
+                const aW = w.clientWidth - 40, aH = w.clientHeight - 40;
+                if(aW > 0 && aH > 0) {
+                    const scale = Math.min(aW/1056, aH/816);
+                    s.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                }
+            } else if(s) s.style.transform = 'none';
+        }
+        window.addEventListener('resize', adjustScale);
+
+        function toggleSidebar() {
+            let sbVis = document.getElementById('sidebar').style.display !== 'none';
+            sbVis = !sbVis;
+            document.getElementById('sidebar').style.display = sbVis ? '' : 'none';
+            document.getElementById('iconCollapse').classList.toggle('hidden', !sbVis);
+            document.getElementById('iconExpand').classList.toggle('hidden', sbVis);
+            document.getElementById('textToggleSidebar').textContent = sbVis ? "Ocultar Panel" : "Mostrar Panel";
+            setTimeout(adjustScale, 10); setTimeout(adjustScale, 150);
+        }
+
+        // --- LÓGICA DE ACTUALIZACIÓN VISUAL ---
+        function updateDisplay() {
+            const fields = ['Name', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone'];
+            fields.forEach(f => {
+                const k = f.charAt(0).toLowerCase() + f.slice(1);
+                if(document.getElementById('display'+f)) document.getElementById('display'+f).textContent = state[k];
+                if(document.getElementById('input'+f)) document.getElementById('input'+f).value = state[k];
+            });
+
+            const valContainer = document.getElementById('validityContainer');
+            const inputValYears = document.getElementById('inputValidityYears');
+            
+            if (state.validityType === 'ocultar') {
+                if (valContainer) valContainer.style.display = 'none';
+                if (inputValYears) inputValYears.classList.add('hidden');
+            } else {
+                if (valContainer) {
+                    valContainer.style.display = 'block';
+                    if (state.validityType === 'aplica') {
+                        if (inputValYears) inputValYears.classList.remove('hidden');
+                        document.getElementById('displayValidity').textContent = `vigencia ${state.validityYears} año${state.validityYears == 1 ? '' : 's'}`;
+                    } else {
+                        if (inputValYears) inputValYears.classList.add('hidden');
+                        document.getElementById('displayValidity').textContent = state.validityType;
+                    }
+                }
+            }
+            if(document.getElementById('inputValidityType')) document.getElementById('inputValidityType').value = state.validityType;
+            if(inputValYears) inputValYears.value = state.validityYears;
+
+            [1, 2].forEach(n => {
+                const el = document.getElementById(`sign${n}ImageContainer`).firstElementChild;
+                if(el) {
+                    el.style.transformOrigin = 'bottom center';
+                    el.style.transform = `translate(${state[`sign${n}X`]}px, ${state[`sign${n}Y`]}px) scale(${state[`sign${n}Size`]/100})`;
+                }
+                ['Size', 'X', 'Y'].forEach(p => document.getElementById(`inputSign${n}${p}`).value = state[`sign${n}${p}`]);
+            });
+        }
+
+        // Event Listeners Básicos
+        document.querySelectorAll('input, textarea, select').forEach(inp => {
+            if(inp.type !== 'file' && inp.id !== 'verifyIdInput' && inp.id !== 'loginPass') {
+                inp.addEventListener('input', e => { state[e.target.name] = e.target.value; updateDisplay(); });
+            }
+        });
+
+        // Subida de Firmas
+        [1, 2].forEach(n => {
+            document.getElementById(`uploadSign${n}`).addEventListener('change', e => {
+                if(e.target.files[0]) {
+                    const r = new FileReader();
+                    r.onload = ev => {
+                        document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${ev.target.result}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+                        updateDisplay();
+                    };
+                    r.readAsDataURL(e.target.files[0]);
+                }
+            });
+        });
+
+        // --- IMPRESIÓN Y GUARDADO INDIVIDUAL ---
+        function printAndSaveIndividual() {
+            if(!state.name || !state.id) {
+                alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
+                return;
+            }
+            saveToDB(state.name, state.id);
+            window.print();
+        }
+
+        // --- LÓGICA DE EXCEL MASIVO ---
+        document.getElementById('uploadExcel').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                const rows = XLSX.utils.sheet_to_json(firstSheet, {header: 1}); 
+                if(rows.length === 0) return alert("El archivo Excel está vacío.");
+
+                const headers = rows[0].map(h => String(h).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                const nameIdx = headers.findIndex(h => h.includes('nombre'));
+                const idIdx = headers.findIndex(h => h.includes('cedula') || h.includes('identificacion'));
+
+                if(nameIdx === -1) {
+                    alert("No se encontró la columna 'Nombre' en la primera fila del Excel.");
+                    return;
+                }
+
+                state.bulkStudents = [];
+                for(let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if(row[nameIdx]) {
+                        state.bulkStudents.push({
+                            name: String(row[nameIdx]).trim(),
+                            id: idIdx !== -1 && row[idIdx] ? String(row[idIdx]).trim() : ''
+                        });
+                    }
+                }
+
+                if(state.bulkStudents.length > 0) {
+                    document.getElementById('bulkCount').textContent = state.bulkStudents.length;
+                    document.getElementById('btnBulkGenerate').classList.remove('hidden');
+                    alert(`¡Éxito! Se encontraron ${state.bulkStudents.length} estudiantes listos para exportar y guardar en BD.`);
+                } else {
+                    alert("No se encontraron estudiantes válidos en el archivo.");
+                    document.getElementById('btnBulkGenerate').classList.add('hidden');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // --- GENERACIÓN, GUARDADO BD Y DESCARGA DEL ZIP ---
+        document.getElementById('btnBulkGenerate').addEventListener('click', async () => {
+            if(state.bulkStudents.length === 0) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            overlay.classList.remove('hidden');
+
+            const zip = new JSZip();
+            const { jsPDF } = window.jspdf;
+            const docContainer = document.getElementById('documentContainer');
+            const scaleWrapper = document.getElementById('documentScaleWrapper');
+            
+            const originalName = state.name;
+            const originalId = state.id;
+            const originalTransform = scaleWrapper.style.transform;
+            
+            scaleWrapper.style.transform = 'none'; 
+            
+            try {
+                for(let i = 0; i < state.bulkStudents.length; i++) {
+                    const student = state.bulkStudents[i];
+                    loadText.textContent = `Generando y guardando PDF: ${i + 1} de ${state.bulkStudents.length}...`;
+
+                    state.name = student.name;
+                    state.id = student.id;
+                    updateDisplay();
+                    
+                    // Guardar en la Base de Datos Local
+                    saveToDB(student.name, student.id);
+
+                    await new Promise(resolve => setTimeout(resolve, 50));
+
+                    const canvas = await html2canvas(docContainer, {
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    });
+
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                    
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'px',
+                        format: [1056, 816]
+                    });
+                    
+                    pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
+                    
+                    const safeName = student.name.replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                    zip.file(`CERTIFICADO_${safeName}.pdf`, pdf.output('blob'));
+                }
+
+                loadText.textContent = "Comprimiendo archivo ZIP...";
+                const zipContent = await zip.generateAsync({type: "blob"});
+                saveAs(zipContent, "Certificados_FUNETEC.zip");
+
+            } catch(error) {
+                console.error(error);
+                alert("Hubo un error generando los archivos. Verifica la consola.");
+            } finally {
+                state.name = originalName;
+                state.id = originalId;
+                updateDisplay();
+                scaleWrapper.style.transform = originalTransform;
+                overlay.classList.add('hidden');
+            }
+        });
+
+        // --- INICIALIZACIÓN ---
+        window.addEventListener('DOMContentLoaded', () => { 
+            if(sessionStorage.getItem('funetec_auth') === 'true') {
+                showScreen('mainApp');
+            } else {
+                showScreen('welcomeScreen');
+            }
+            updateDisplay(); 
+        });
+    </script>
+</body>
+</html>
