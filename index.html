@@ -31,6 +31,12 @@
         /* Spinner de carga */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d32f2f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Custom scrollbar for sidebar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-900 overflow-hidden">
@@ -111,7 +117,7 @@
     <!-- 4. APLICACIÓN PRINCIPAL GENERADOR -->
     <div id="mainApp" class="hidden flex-col md:flex-row h-screen">
         
-        <div id="sidebar" class="no-print w-full md:w-[26rem] bg-white border-r border-gray-200 p-6 shadow-lg flex flex-col z-20 h-full overflow-y-auto shrink-0">
+        <div id="sidebar" class="no-print w-full md:w-[26rem] bg-white border-r border-gray-200 p-6 shadow-lg flex flex-col z-20 h-full overflow-y-auto shrink-0 custom-scrollbar">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800">Panel Administrativo</h2>
                 <button onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-800 underline">Cerrar Sesión</button>
@@ -150,6 +156,25 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         Descargar ZIP y Subir Nube (<span id="bulkCount">0</span> cert.)
                     </button>
+                </div>
+
+                <!-- NUEVA SECCIÓN: BD LOCAL LISTA -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-800">Base de Datos de Certificados</h3>
+                        <button onclick="loadDBRecords()" class="text-gray-400 hover:text-gray-800 transition-colors" title="Actualizar Lista">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <div class="relative">
+                            <input type="text" id="searchDBInput" oninput="renderDBList(this.value)" placeholder="Buscar nombre, cédula o curso..." class="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-xs font-medium" />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-2.5 text-gray-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                    </div>
+                    <div id="dbRecordsList" class="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                        <p class="text-xs text-gray-500 text-center py-2">Cargando registros...</p>
+                    </div>
                 </div>
 
                 <div class="mt-6 pt-6 border-t border-gray-200">
@@ -194,13 +219,20 @@
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Teléfono</label><input type="text" id="inputPhone" name="phone" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                     </div>
                 </div>
+                
+                <!-- Botones Individuales Separados -->
+                <div class="mt-6 pt-6 border-t border-gray-200 flex flex-col gap-3 pb-8">
+                    <button onclick="printAndSaveIndividual()" class="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        IMPRIMIR
+                    </button>
+                    <button onclick="saveIndividualOnly()" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 10.18a5.22 5.22 0 0 0-7.16-2.52 7 7 0 0 0-11 4.54A4.5 4.5 0 0 0 6 21h12.5a4.5 4.5 0 0 0 1.92-8.82z"></path><polyline points="12 12 12 18"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>
+                        GUARDAR EN LA NUBE
+                    </button>
+                </div>
+                
             </div>
-
-            <!-- Botón Individual -->
-            <button onclick="printAndSaveIndividual()" class="mt-6 w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                Imprimir y Guardar en Nube
-            </button>
         </div>
 
         <!-- VISTA PREVIA (DOCUMENTO) -->
@@ -272,7 +304,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Inicializar tu Firebase
         const firebaseConfig = {
@@ -299,7 +331,8 @@
             sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, 
             sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, 
             email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679',
-            bulkStudents: [] 
+            bulkStudents: [],
+            dbRecords: [] // Registros de Firebase para la lista del panel
         };
 
         // --- GESTIÓN DE PANTALLAS (Globalizadas para HTML) ---
@@ -316,7 +349,10 @@
                     }
                 }
             });
-            if(screenId === 'mainApp') setTimeout(adjustScale, 100);
+            if(screenId === 'mainApp') {
+                setTimeout(adjustScale, 100);
+                window.loadDBRecords(); // Cargar BD al abrir el panel
+            }
         };
 
         window.logout = function() {
@@ -353,7 +389,6 @@
             let isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
             let expYear = parseInt(state.year) + parseInt(state.validityYears);
             
-            // Creamos un ID único usando la cédula y curso limpio
             const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
             const docId = `${String(studentId).trim()}_${safeCourse}`;
 
@@ -366,9 +401,67 @@
                     isIndefinite: isIndefinite,
                     dateAdded: new Date().toISOString()
                 });
-                console.log("Guardado en Firebase exitosamente.");
             } catch (error) {
                 console.error("Error al guardar en Firebase:", error);
+            }
+        };
+
+        window.loadDBRecords = async function() {
+            const container = document.getElementById('dbRecordsList');
+            if(container) container.innerHTML = `<p class="text-xs text-gray-500 text-center py-2">Cargando...</p>`;
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "certificados"));
+                state.dbRecords = [];
+                querySnapshot.forEach((doc) => {
+                    state.dbRecords.push({ docId: doc.id, ...doc.data() });
+                });
+                // Ordenar por más recientes
+                state.dbRecords.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+                window.renderDBList();
+            } catch (error) {
+                console.error("Error cargando BD:", error);
+                if(container) container.innerHTML = `<p class="text-xs text-red-500 text-center py-2">Error cargando datos.</p>`;
+            }
+        };
+
+        window.renderDBList = function(searchTerm = '') {
+            const container = document.getElementById('dbRecordsList');
+            if(!container) return;
+            
+            const term = searchTerm.toLowerCase().trim();
+            const filtered = state.dbRecords.filter(r => 
+                r.name.toLowerCase().includes(term) || 
+                r.id.toLowerCase().includes(term) ||
+                r.course.toLowerCase().includes(term)
+            );
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<p class="text-[10px] text-gray-500 text-center py-2">No se encontraron registros.</p>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(r => `
+                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex justify-between items-center group hover:bg-red-50 transition-colors">
+                    <div class="overflow-hidden pr-2">
+                        <p class="text-[10px] font-bold text-gray-800 truncate" title="${r.name}">${r.name}</p>
+                        <p class="text-[9px] text-gray-500 truncate" title="${r.course}">C.C. ${r.id} | ${r.course}</p>
+                    </div>
+                    <button onclick="deleteRecord('${r.docId}')" class="text-gray-400 hover:text-red-600 p-1 rounded transition-colors shrink-0" title="Eliminar registro">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        window.deleteRecord = async function(docId) {
+            if(!confirm("¿Estás seguro de que deseas eliminar este certificado de la base de datos?\n\nEsta acción no se puede deshacer y el estudiante ya no podrá verificarlo.")) return;
+            try {
+                await deleteDoc(doc(db, "certificados", docId));
+                await window.loadDBRecords(); // Refrescar lista
+            } catch(error) {
+                console.error("Error eliminando documento:", error);
+                alert("Error al eliminar el registro. Revisa la conexión.");
             }
         };
 
@@ -487,7 +580,7 @@
 
         // Event Listeners Básicos
         document.querySelectorAll('input, textarea, select').forEach(inp => {
-            if(inp.type !== 'file' && inp.id !== 'verifyIdInput' && inp.id !== 'loginPass') {
+            if(inp.type !== 'file' && inp.id !== 'verifyIdInput' && inp.id !== 'loginPass' && inp.id !== 'searchDBInput') {
                 inp.addEventListener('input', e => { state[e.target.name] = e.target.value; updateDisplay(); });
             }
         });
@@ -506,6 +599,17 @@
             });
         });
 
+        // --- GUARDADO INDIVIDUAL (SOLO NUBE) ---
+        window.saveIndividualOnly = async function() {
+            if(!state.name || !state.id) {
+                alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de guardar.");
+                return;
+            }
+            await window.saveToDB(state.name, state.id);
+            await window.loadDBRecords(); // Refrescar lista lateral
+            alert("¡Certificado guardado exitosamente en la nube!");
+        };
+
         // --- IMPRESIÓN Y GUARDADO INDIVIDUAL ---
         window.printAndSaveIndividual = async function() {
             if(!state.name || !state.id) {
@@ -513,6 +617,7 @@
                 return;
             }
             await window.saveToDB(state.name, state.id);
+            await window.loadDBRecords(); // Refrescar lista lateral
             window.print();
         };
 
@@ -629,6 +734,7 @@
                 updateDisplay();
                 scaleWrapper.style.transform = originalTransform;
                 overlay.classList.add('hidden');
+                await window.loadDBRecords(); // Refrescar lista lateral después del proceso masivo
             }
         });
 
