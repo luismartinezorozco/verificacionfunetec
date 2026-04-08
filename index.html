@@ -398,7 +398,7 @@
 
         // --- FUNCIONES DE CONFIGURACIÓN DE FIRMAS (FIREBASE) ---
         window.saveSignatureConfig = async function() {
-            if(!auth.currentUser) return alert("Debes estar autenticado con la base de datos para guardar la configuración.");
+            if(!auth.currentUser) return alert("Debes estar conectado con la base de datos para guardar la configuración.");
             
             const btn = document.getElementById('btnSaveSigns');
             const originalText = btn.innerHTML;
@@ -425,10 +425,18 @@
                     address: state.address,
                     phone: state.phone
                 });
-                alert("¡Configuración guardada! Las firmas, nombres y datos de contacto cargarán automáticamente la próxima vez.");
+                alert("¡Configuración guardada! Las firmas, nombres y datos de contacto cargarán automáticamente la próxima vez que entres.");
             } catch(error) {
                 console.error("Error guardando configuración:", error);
-                alert("Error al guardar la configuración en la nube.");
+                
+                // Mejor manejo de errores para que sepas exactamente qué falló
+                if (error.code === 'permission-denied') {
+                    alert("⚠️ Error de Permisos en Firebase:\nTu base de datos está bloqueando el guardado. Necesitas ir a Firebase > Firestore Database > Reglas (Rules) y asegurarte de permitir la escritura (write: if true;) en la colección 'configuracion'.");
+                } else if (error.message && error.message.includes('exceed')) {
+                    alert("⚠️ Error de Tamaño:\nLas imágenes de las firmas siguen siendo demasiado pesadas. Intenta con una imagen más sencilla.");
+                } else {
+                    alert("Error al guardar en la nube: " + error.message);
+                }
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -714,15 +722,41 @@
             }
         });
 
-        // Subida de Firmas
+        // Subida de Firmas con compresión automática
         [1, 2].forEach(n => {
             document.getElementById(`uploadSign${n}`).addEventListener('change', e => {
                 if(e.target.files[0]) {
                     const r = new FileReader();
                     r.onload = ev => {
-                        state[`sign${n}Image`] = ev.target.result; // Guardar la imagen en el estado global
-                        document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${ev.target.result}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
-                        updateDisplay();
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            // Redimensionar si es muy grande para no saturar Firebase (límite 1MB)
+                            const MAX_SIZE = 400; 
+                            if (width > MAX_SIZE || height > MAX_SIZE) {
+                                if (width > height) {
+                                    height *= MAX_SIZE / width;
+                                    width = MAX_SIZE;
+                                } else {
+                                    width *= MAX_SIZE / height;
+                                    height = MAX_SIZE;
+                                }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // Convertir imagen a Base64 comprimida en PNG para mantener transparencia
+                            const compressedBase64 = canvas.toDataURL('image/png');
+                            state[`sign${n}Image`] = compressedBase64;
+                            document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${compressedBase64}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+                            updateDisplay();
+                        };
+                        img.src = ev.target.result;
                     };
                     r.readAsDataURL(e.target.files[0]);
                 }
