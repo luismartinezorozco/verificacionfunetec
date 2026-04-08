@@ -156,11 +156,11 @@
                     <div id="bulkButtonsContainer" class="hidden flex-col gap-2">
                         <button id="btnBulkZip" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            DESCARGAR ZIP Y GUARDAR (<span id="bulkCountZip">0</span>)
+                            DESCARGAR ZIP Y GUARDAR
                         </button>
                         <button id="btnBulkCloud" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 10.18a5.22 5.22 0 0 0-7.16-2.52 7 7 0 0 0-11 4.54A4.5 4.5 0 0 0 6 21h12.5a4.5 4.5 0 0 0 1.92-8.82z"></path><polyline points="12 12 12 18"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>
-                            SOLO SUBIR A LA NUBE (<span id="bulkCountCloud">0</span>)
+                            SOLO SUBIR A LA NUBE
                         </button>
                     </div>
                 </div>
@@ -663,8 +663,6 @@
                 }
 
                 if(state.bulkStudents.length > 0) {
-                    document.getElementById('bulkCountZip').textContent = state.bulkStudents.length;
-                    document.getElementById('bulkCountCloud').textContent = state.bulkStudents.length;
                     document.getElementById('bulkButtonsContainer').classList.remove('hidden');
                     alert(`¡Éxito! Se encontraron ${state.bulkStudents.length} estudiantes listos para exportar y guardar en BD.`);
                 } else {
