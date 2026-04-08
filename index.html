@@ -152,13 +152,20 @@
                     <h3 class="text-sm font-bold text-gray-800 mb-2">Generación Masiva (Excel)</h3>
                     <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba, luego sube un Excel con columnas <b>"Nombre"</b> y <b>"Cedula"</b> para exportar todo y guardarlo en la Base de Datos Firebase.</p>
                     <input type="file" id="uploadExcel" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 mb-3 border border-gray-200 rounded p-1" />
-                    <button id="btnBulkGenerate" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Descargar ZIP y Subir Nube (<span id="bulkCount">0</span> cert.)
-                    </button>
+                    
+                    <div id="bulkButtonsContainer" class="hidden flex-col gap-2">
+                        <button id="btnBulkZip" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            DESCARGAR ZIP Y GUARDAR (<span id="bulkCountZip">0</span>)
+                        </button>
+                        <button id="btnBulkCloud" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 10.18a5.22 5.22 0 0 0-7.16-2.52 7 7 0 0 0-11 4.54A4.5 4.5 0 0 0 6 21h12.5a4.5 4.5 0 0 0 1.92-8.82z"></path><polyline points="12 12 12 18"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>
+                            SOLO SUBIR A LA NUBE (<span id="bulkCountCloud">0</span>)
+                        </button>
+                    </div>
                 </div>
 
-                <!-- NUEVA SECCIÓN: BD LOCAL LISTA -->
+                <!-- BD LOCAL LISTA -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="text-sm font-bold text-gray-800">Base de Datos de Certificados</h3>
@@ -656,19 +663,20 @@
                 }
 
                 if(state.bulkStudents.length > 0) {
-                    document.getElementById('bulkCount').textContent = state.bulkStudents.length;
-                    document.getElementById('btnBulkGenerate').classList.remove('hidden');
+                    document.getElementById('bulkCountZip').textContent = state.bulkStudents.length;
+                    document.getElementById('bulkCountCloud').textContent = state.bulkStudents.length;
+                    document.getElementById('bulkButtonsContainer').classList.remove('hidden');
                     alert(`¡Éxito! Se encontraron ${state.bulkStudents.length} estudiantes listos para exportar y guardar en BD.`);
                 } else {
                     alert("No se encontraron estudiantes válidos en el archivo.");
-                    document.getElementById('btnBulkGenerate').classList.add('hidden');
+                    document.getElementById('bulkButtonsContainer').classList.add('hidden');
                 }
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // --- GENERACIÓN, GUARDADO BD Y DESCARGA DEL ZIP ---
-        document.getElementById('btnBulkGenerate').addEventListener('click', async () => {
+        // --- GENERACIÓN MASIVA (ZIP + NUBE) ---
+        document.getElementById('btnBulkZip').addEventListener('click', async () => {
             if(state.bulkStudents.length === 0) return;
 
             const overlay = document.getElementById('loadingOverlay');
@@ -733,6 +741,32 @@
                 state.id = originalId;
                 updateDisplay();
                 scaleWrapper.style.transform = originalTransform;
+                overlay.classList.add('hidden');
+                await window.loadDBRecords(); // Refrescar lista lateral después del proceso masivo
+            }
+        });
+
+        // --- GENERACIÓN MASIVA (SOLO NUBE) ---
+        document.getElementById('btnBulkCloud').addEventListener('click', async () => {
+            if(state.bulkStudents.length === 0) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            overlay.classList.remove('hidden');
+            
+            try {
+                for(let i = 0; i < state.bulkStudents.length; i++) {
+                    const student = state.bulkStudents[i];
+                    loadText.textContent = `Subiendo a la nube: ${i + 1} de ${state.bulkStudents.length}...`;
+
+                    // Guardar en la Base de Datos Firebase (sin modificar la parte visual)
+                    await window.saveToDB(student.name, student.id);
+                }
+                alert("¡Todos los certificados masivos se subieron exitosamente a la nube!");
+            } catch(error) {
+                console.error(error);
+                alert("Hubo un error subiendo los archivos a la nube. Verifica la consola.");
+            } finally {
                 overlay.classList.add('hidden');
                 await window.loadDBRecords(); // Refrescar lista lateral después del proceso masivo
             }
