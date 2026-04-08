@@ -38,8 +38,8 @@
     <!-- Pantalla de Carga de Proceso Masivo -->
     <div id="loadingOverlay" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-900 bg-opacity-80 backdrop-blur-sm text-white no-print">
         <div class="loader mb-4"></div>
-        <h2 class="text-xl font-bold mb-2">Generando Certificados...</h2>
-        <p id="loadingText" class="text-sm text-gray-300">Por favor, espera un momento. No cierres esta ventana.</p>
+        <h2 class="text-xl font-bold mb-2">Procesando y Guardando...</h2>
+        <p id="loadingText" class="text-sm text-gray-300">Conectando con la base de datos en la nube. No cierres esta ventana.</p>
     </div>
 
     <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
@@ -78,12 +78,12 @@
                     <input type="text" id="verifyIdInput" required placeholder="Número de Cédula" class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none text-sm transition-all" />
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-3.5 text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </div>
-                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar</button>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar Cédula</button>
             </form>
 
             <!-- Contenedor de Resultados -->
             <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200">
-                <!-- Se inyectarán los resultados desde JavaScript -->
+                <!-- Resultados Inyectados aquí -->
             </div>
         </div>
     </div>
@@ -144,11 +144,11 @@
                 <!-- Sección: Excel Masivo -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-sm font-bold text-gray-800 mb-2">Generación Masiva (Excel)</h3>
-                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba, luego sube un Excel con columnas <b>"Nombre"</b> y <b>"Cedula"</b> para exportar todo y guardarlo en la Base de Datos.</p>
+                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba, luego sube un Excel con columnas <b>"Nombre"</b> y <b>"Cedula"</b> para exportar todo y guardarlo en la Base de Datos Firebase.</p>
                     <input type="file" id="uploadExcel" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 mb-3 border border-gray-200 rounded p-1" />
                     <button id="btnBulkGenerate" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Descargar ZIP y Guardar (<span id="bulkCount">0</span> cert.)
+                        Descargar ZIP y Subir Nube (<span id="bulkCount">0</span> cert.)
                     </button>
                 </div>
 
@@ -196,10 +196,10 @@
                 </div>
             </div>
 
-            <!-- Botón Individual Modificado -->
+            <!-- Botón Individual -->
             <button onclick="printAndSaveIndividual()" class="mt-6 w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                Imprimir y Guardar en BD
+                Imprimir y Guardar en Nube
             </button>
         </div>
 
@@ -268,7 +268,30 @@
         </div>
     </div>
 
-    <script>
+    <!-- Integración FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Inicializar tu Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCUKkHkkwcH6VvMNX14KY8L_P3KAO1qoo",
+            authDomain: "generadorverificaciondiplomas.firebaseapp.com",
+            databaseURL: "https://generadorverificaciondiplomas-default-rtdb.firebaseio.com",
+            projectId: "generadorverificaciondiplomas",
+            storageBucket: "generadorverificaciondiplomas.firebasestorage.app",
+            messagingSenderId: "241061200480",
+            appId: "1:241061200480:web:bd8ba05cf7b761f49a3905"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Autenticación anónima para permitir lectura/escritura segura
+        signInAnonymously(auth).catch((error) => console.error("Error Auth Firebase:", error));
+
         // ESTADO GLOBAL
         const state = { 
             name: '', id: '', course: 'COMO PUBLICAR EN INSTAGRAM.', hours: '5', day: '1', month: 'Abril', year: '2026', 
@@ -279,8 +302,8 @@
             bulkStudents: [] 
         };
 
-        // --- GESTIÓN DE PANTALLAS ---
-        function showScreen(screenId) {
+        // --- GESTIÓN DE PANTALLAS (Globalizadas para HTML) ---
+        window.showScreen = function(screenId) {
             ['welcomeScreen', 'verificationScreen', 'loginScreen', 'mainApp'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
@@ -294,105 +317,23 @@
                 }
             });
             if(screenId === 'mainApp') setTimeout(adjustScale, 100);
-        }
+        };
 
-        function logout() {
+        window.logout = function() {
             sessionStorage.removeItem('funetec_auth');
-            showScreen('welcomeScreen');
-        }
+            window.showScreen('welcomeScreen');
+        };
 
-        // --- LÓGICA DE VERIFICACIÓN (BASE DE DATOS LOCAL) ---
-        // Guarda un estudiante en la base de datos de LocalStorage
-        function saveToDB(studentName, studentId) {
-            if(!studentName || !studentId) return;
-            
-            let db = JSON.parse(localStorage.getItem('funetec_db') || '[]');
-            
-            let isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
-            let expYear = parseInt(state.year) + parseInt(state.validityYears);
-            
-            // Eliminar registro previo si es el mismo curso y misma cédula para evitar duplicados
-            db = db.filter(record => !(record.id === String(studentId).trim() && record.course === state.course));
-            
-            db.push({
-                id: String(studentId).trim(),
-                name: String(studentName).trim().toUpperCase(),
-                course: state.course.toUpperCase(),
-                expYear: isIndefinite ? 9999 : expYear,
-                isIndefinite: isIndefinite,
-                dateAdded: new Date().toISOString()
-            });
-            
-            localStorage.setItem('funetec_db', JSON.stringify(db));
-        }
+        window.toggleSidebar = function() {
+            let sbVis = document.getElementById('sidebar').style.display !== 'none';
+            sbVis = !sbVis;
+            document.getElementById('sidebar').style.display = sbVis ? '' : 'none';
+            document.getElementById('iconCollapse').classList.toggle('hidden', !sbVis);
+            document.getElementById('iconExpand').classList.toggle('hidden', sbVis);
+            document.getElementById('textToggleSidebar').textContent = sbVis ? "Ocultar Panel" : "Mostrar Panel";
+            setTimeout(adjustScale, 10); setTimeout(adjustScale, 150);
+        };
 
-        // Consulta de Verificación
-        document.getElementById('verifyForm').addEventListener('submit', e => {
-            e.preventDefault();
-            const idToSearch = document.getElementById('verifyIdInput').value.trim();
-            const db = JSON.parse(localStorage.getItem('funetec_db') || '[]');
-            
-            // Filtrar certificados que coincidan con la cédula
-            const results = db.filter(r => r.id === idToSearch);
-            const container = document.getElementById('verifyResultsContainer');
-            
-            if(results.length > 0) {
-                // Tomar el nombre del primer resultado
-                let html = `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-bold text-gray-900 leading-tight">${results[0].name}</h3>
-                        <p class="text-xs font-semibold text-gray-500 mt-1">C.C. ${results[0].id}</p>
-                    </div>
-                    <div class="space-y-3">
-                `;
-                
-                const currentYear = new Date().getFullYear();
-                
-                // Listar todos los cursos de esa persona
-                results.forEach(cert => {
-                    let isActive = cert.isIndefinite || currentYear <= cert.expYear;
-                    let badge = isActive ? 
-                        `<span class="bg-green-100 text-green-800 border border-green-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Activo</span>` : 
-                        `<span class="bg-red-100 text-red-800 border border-red-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Vencido</span>`;
-                    
-                    html += `
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <p class="text-xs font-bold text-gray-800 mb-2 leading-tight">${cert.course}</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-gray-500">Válido hasta: ${cert.isIndefinite ? 'Sin caducidad' : cert.expYear}</span>
-                                ${badge}
-                            </div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = `
-                    <div class="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-red-400 mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        <p class="text-sm font-bold text-red-800">No se encontraron registros</p>
-                        <p class="text-xs text-red-600 mt-1">Verifique el número de cédula ingresado.</p>
-                    </div>
-                `;
-            }
-            container.classList.remove('hidden');
-        });
-
-        // --- LÓGICA DE LOGIN ---
-        document.getElementById('loginForm').addEventListener('submit', e => {
-            e.preventDefault();
-            if(document.getElementById('loginPass').value === 'A7f9K2mX8Q4zT1B') {
-                document.getElementById('loginError').classList.add('hidden');
-                sessionStorage.setItem('funetec_auth', 'true');
-                showScreen('mainApp');
-                document.getElementById('loginPass').value = ''; // limpiar input
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
-            }
-        });
-
-        // --- LÓGICA DE ESCALA ---
         function adjustScale() {
             const w = document.getElementById('previewWrapper'), s = document.getElementById('documentScaleWrapper');
             if(!window.matchMedia('print').matches && w && s) {
@@ -405,15 +346,104 @@
         }
         window.addEventListener('resize', adjustScale);
 
-        function toggleSidebar() {
-            let sbVis = document.getElementById('sidebar').style.display !== 'none';
-            sbVis = !sbVis;
-            document.getElementById('sidebar').style.display = sbVis ? '' : 'none';
-            document.getElementById('iconCollapse').classList.toggle('hidden', !sbVis);
-            document.getElementById('iconExpand').classList.toggle('hidden', sbVis);
-            document.getElementById('textToggleSidebar').textContent = sbVis ? "Ocultar Panel" : "Mostrar Panel";
-            setTimeout(adjustScale, 10); setTimeout(adjustScale, 150);
-        }
+        // --- FUNCIONES DE BASE DE DATOS (FIREBASE) ---
+        window.saveToDB = async function(studentName, studentId) {
+            if(!studentName || !studentId || !auth.currentUser) return;
+            
+            let isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
+            let expYear = parseInt(state.year) + parseInt(state.validityYears);
+            
+            // Creamos un ID único usando la cédula y curso limpio
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(studentId).trim()}_${safeCourse}`;
+
+            try {
+                await setDoc(doc(db, "certificados", docId), {
+                    id: String(studentId).trim(),
+                    name: String(studentName).trim().toUpperCase(),
+                    course: state.course.toUpperCase(),
+                    expYear: isIndefinite ? 9999 : expYear,
+                    isIndefinite: isIndefinite,
+                    dateAdded: new Date().toISOString()
+                });
+                console.log("Guardado en Firebase exitosamente.");
+            } catch (error) {
+                console.error("Error al guardar en Firebase:", error);
+            }
+        };
+
+        // --- LÓGICA DE VERIFICACIÓN (FIREBASE) ---
+        document.getElementById('verifyForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const idToSearch = document.getElementById('verifyIdInput').value.trim();
+            const container = document.getElementById('verifyResultsContainer');
+            
+            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">Buscando en la base de datos...</p>`;
+            container.classList.remove('hidden');
+
+            try {
+                const q = query(collection(db, "certificados"), where("id", "==", idToSearch));
+                const querySnapshot = await getDocs(q);
+
+                if(!querySnapshot.empty) {
+                    let results = [];
+                    querySnapshot.forEach((doc) => results.push(doc.data()));
+
+                    let html = `
+                        <div class="mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 leading-tight">${results[0].name}</h3>
+                            <p class="text-xs font-semibold text-gray-500 mt-1">C.C. ${results[0].id}</p>
+                        </div>
+                        <div class="space-y-3">
+                    `;
+                    
+                    const currentYear = new Date().getFullYear();
+                    
+                    results.forEach(cert => {
+                        let isActive = cert.isIndefinite || currentYear <= cert.expYear;
+                        let badge = isActive ? 
+                            `<span class="bg-green-100 text-green-800 border border-green-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Activo</span>` : 
+                            `<span class="bg-red-100 text-red-800 border border-red-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Vencido</span>`;
+                        
+                        html += `
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <p class="text-xs font-bold text-gray-800 mb-2 leading-tight">${cert.course}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] text-gray-500">Válido hasta: ${cert.isIndefinite ? 'Sin caducidad' : cert.expYear}</span>
+                                    ${badge}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-red-400 mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <p class="text-sm font-bold text-red-800">No se encontraron registros</p>
+                            <p class="text-xs text-red-600 mt-1">Verifique el número de cédula ingresado.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error conectando a Firebase:", error);
+                container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Error de conexión con la base de datos.</p>`;
+            }
+        });
+
+        // --- LÓGICA DE LOGIN (INTERFAZ) ---
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            if(document.getElementById('loginPass').value === 'A7f9K2mX8Q4zT1B') {
+                document.getElementById('loginError').classList.add('hidden');
+                sessionStorage.setItem('funetec_auth', 'true');
+                window.showScreen('mainApp');
+                document.getElementById('loginPass').value = ''; 
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
 
         // --- LÓGICA DE ACTUALIZACIÓN VISUAL ---
         function updateDisplay() {
@@ -477,14 +507,14 @@
         });
 
         // --- IMPRESIÓN Y GUARDADO INDIVIDUAL ---
-        function printAndSaveIndividual() {
+        window.printAndSaveIndividual = async function() {
             if(!state.name || !state.id) {
                 alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
                 return;
             }
-            saveToDB(state.name, state.id);
+            await window.saveToDB(state.name, state.id);
             window.print();
-        }
+        };
 
         // --- LÓGICA DE EXCEL MASIVO ---
         document.getElementById('uploadExcel').addEventListener('change', function(e) {
@@ -494,10 +524,10 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
+                const workbook = window.XLSX.read(data, {type: 'array'});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                const rows = XLSX.utils.sheet_to_json(firstSheet, {header: 1}); 
+                const rows = window.XLSX.utils.sheet_to_json(firstSheet, {header: 1}); 
                 if(rows.length === 0) return alert("El archivo Excel está vacío.");
 
                 const headers = rows[0].map(h => String(h).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
@@ -540,7 +570,7 @@
             const loadText = document.getElementById('loadingText');
             overlay.classList.remove('hidden');
 
-            const zip = new JSZip();
+            const zip = new window.JSZip();
             const { jsPDF } = window.jspdf;
             const docContainer = document.getElementById('documentContainer');
             const scaleWrapper = document.getElementById('documentScaleWrapper');
@@ -554,18 +584,18 @@
             try {
                 for(let i = 0; i < state.bulkStudents.length; i++) {
                     const student = state.bulkStudents[i];
-                    loadText.textContent = `Generando y guardando PDF: ${i + 1} de ${state.bulkStudents.length}...`;
+                    loadText.textContent = `Generando y guardando Nube: ${i + 1} de ${state.bulkStudents.length}...`;
 
                     state.name = student.name;
                     state.id = student.id;
                     updateDisplay();
                     
-                    // Guardar en la Base de Datos Local
-                    saveToDB(student.name, student.id);
+                    // Guardar en la Base de Datos Firebase
+                    await window.saveToDB(student.name, student.id);
 
                     await new Promise(resolve => setTimeout(resolve, 50));
 
-                    const canvas = await html2canvas(docContainer, {
+                    const canvas = await window.html2canvas(docContainer, {
                         scale: 2, 
                         useCORS: true, 
                         logging: false,
@@ -588,7 +618,7 @@
 
                 loadText.textContent = "Comprimiendo archivo ZIP...";
                 const zipContent = await zip.generateAsync({type: "blob"});
-                saveAs(zipContent, "Certificados_FUNETEC.zip");
+                window.saveAs(zipContent, "Certificados_FUNETEC.zip");
 
             } catch(error) {
                 console.error(error);
@@ -605,9 +635,9 @@
         // --- INICIALIZACIÓN ---
         window.addEventListener('DOMContentLoaded', () => { 
             if(sessionStorage.getItem('funetec_auth') === 'true') {
-                showScreen('mainApp');
+                window.showScreen('mainApp');
             } else {
-                showScreen('welcomeScreen');
+                window.showScreen('welcomeScreen');
             }
             updateDisplay(); 
         });
