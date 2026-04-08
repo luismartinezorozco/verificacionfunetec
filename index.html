@@ -180,7 +180,7 @@
                         </div>
                     </div>
                     <div id="dbRecordsList" class="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                        <p class="text-xs text-gray-500 text-center py-2">Cargando registros...</p>
+                        <!-- La lista se mantendrá vacía y oculta hasta que se realice una búsqueda -->
                     </div>
                 </div>
 
@@ -415,7 +415,6 @@
 
         window.loadDBRecords = async function() {
             const container = document.getElementById('dbRecordsList');
-            if(container) container.innerHTML = `<p class="text-xs text-gray-500 text-center py-2">Cargando...</p>`;
             
             try {
                 const querySnapshot = await getDocs(collection(db, "certificados"));
@@ -425,7 +424,10 @@
                 });
                 // Ordenar por más recientes
                 state.dbRecords.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-                window.renderDBList();
+                
+                // Mantener el estado de la búsqueda actual (o dejar vacío/oculto si no hay texto)
+                const currentSearch = document.getElementById('searchDBInput')?.value || '';
+                window.renderDBList(currentSearch);
             } catch (error) {
                 console.error("Error cargando BD:", error);
                 if(container) container.innerHTML = `<p class="text-xs text-red-500 text-center py-2">Error cargando datos.</p>`;
@@ -437,6 +439,13 @@
             if(!container) return;
             
             const term = searchTerm.toLowerCase().trim();
+            
+            // Ocultar la lista si el buscador está vacío
+            if (term === '') {
+                container.innerHTML = '';
+                return;
+            }
+
             const filtered = state.dbRecords.filter(r => 
                 r.name.toLowerCase().includes(term) || 
                 r.id.toLowerCase().includes(term) ||
