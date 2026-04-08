@@ -225,6 +225,12 @@
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Dirección</label><input type="text" id="inputAddress" name="address" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Teléfono</label><input type="text" id="inputPhone" name="phone" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                     </div>
+                    
+                    <!-- NUEVO BOTÓN: Guardar Configuración -->
+                    <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full mt-5 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-2.5 rounded-lg font-bold hover:bg-blue-100 transition-colors shadow-sm border border-blue-200 text-[10px] sm:text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        GUARDAR CONFIGURACIÓN COMO PREDETERMINADA
+                    </button>
                 </div>
                 
                 <!-- Botones Individuales Separados -->
@@ -311,7 +317,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Inicializar tu Firebase
         const firebaseConfig = {
@@ -335,8 +341,8 @@
         const state = { 
             name: '', id: '', course: 'COMO PUBLICAR EN INSTAGRAM.', hours: '5', day: '1', month: 'Abril', year: '2026', 
             validityType: 'aplica', validityYears: '2', 
-            sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, 
-            sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, 
+            sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
+            sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
             email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679',
             bulkStudents: [],
             dbRecords: [] // Registros de Firebase para la lista del panel
@@ -359,6 +365,7 @@
             if(screenId === 'mainApp') {
                 setTimeout(adjustScale, 100);
                 window.loadDBRecords(); // Cargar BD al abrir el panel
+                window.loadSignatureConfig(); // Cargar la configuración guardada de firmas y contacto
             }
         };
 
@@ -388,6 +395,66 @@
             } else if(s) s.style.transform = 'none';
         }
         window.addEventListener('resize', adjustScale);
+
+        // --- FUNCIONES DE CONFIGURACIÓN DE FIRMAS (FIREBASE) ---
+        window.saveSignatureConfig = async function() {
+            if(!auth.currentUser) return alert("Debes estar autenticado con la base de datos para guardar la configuración.");
+            
+            const btn = document.getElementById('btnSaveSigns');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Guardando...';
+            btn.disabled = true;
+
+            try {
+                await setDoc(doc(db, "configuracion", "firmas"), {
+                    sign1Name: state.sign1Name,
+                    sign1Role: state.sign1Role,
+                    sign1Size: state.sign1Size,
+                    sign1X: state.sign1X,
+                    sign1Y: state.sign1Y,
+                    sign1Image: state.sign1Image || '',
+                    
+                    sign2Name: state.sign2Name,
+                    sign2Role: state.sign2Role,
+                    sign2Size: state.sign2Size,
+                    sign2X: state.sign2X,
+                    sign2Y: state.sign2Y,
+                    sign2Image: state.sign2Image || '',
+                    
+                    email: state.email,
+                    address: state.address,
+                    phone: state.phone
+                });
+                alert("¡Configuración guardada! Las firmas, nombres y datos de contacto cargarán automáticamente la próxima vez.");
+            } catch(error) {
+                console.error("Error guardando configuración:", error);
+                alert("Error al guardar la configuración en la nube.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.loadSignatureConfig = async function() {
+            try {
+                const docSnap = await getDoc(doc(db, "configuracion", "firmas"));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    Object.assign(state, data); // Actualiza el estado con los datos recuperados
+                    
+                    // Renderizar las imágenes guardadas en el Canvas si existen
+                    [1, 2].forEach(n => {
+                        if(state[`sign${n}Image`]) {
+                            document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${state[`sign${n}Image`]}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+                        }
+                    });
+                    
+                    updateDisplay();
+                }
+            } catch (error) {
+                console.error("Error cargando configuración guardada:", error);
+            }
+        };
 
         // --- FUNCIONES DE BASE DE DATOS (FIREBASE) ---
         window.saveToDB = async function(studentName, studentId) {
@@ -653,6 +720,7 @@
                 if(e.target.files[0]) {
                     const r = new FileReader();
                     r.onload = ev => {
+                        state[`sign${n}Image`] = ev.target.result; // Guardar la imagen en el estado global
                         document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${ev.target.result}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
                         updateDisplay();
                     };
