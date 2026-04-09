@@ -475,13 +475,17 @@
             const docId = `${String(studentId).trim()}_${safeCourse}`;
 
             try {
+                // Mantener la fecha original si el registro ya existe, para que no salte en la lista
+                const existingRecord = state.dbRecords.find(r => r.docId === docId);
+                const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
+
                 await setDoc(doc(db, "certificados", docId), {
                     id: String(studentId).trim(),
                     name: String(studentName).trim().toUpperCase(),
                     course: state.course.toUpperCase(),
                     expYear: isIndefinite ? 9999 : expYear,
                     isIndefinite: isIndefinite,
-                    dateAdded: new Date().toISOString()
+                    dateAdded: dateAdded
                 });
             } catch (error) {
                 console.error("Error al guardar en Firebase:", error);
@@ -788,6 +792,16 @@
                 alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de guardar.");
                 return;
             }
+
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(state.id).trim()}_${safeCourse}`;
+
+            if(state.dbRecords.some(r => r.docId === docId)) {
+                if(!confirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente con los datos actuales?")) {
+                    return; // Se cancela el guardado
+                }
+            }
+
             await window.saveToDB(state.name, state.id);
             await window.loadDBRecords(); // Refrescar lista lateral
             alert("¡Certificado guardado exitosamente en la nube!");
@@ -799,6 +813,16 @@
                 alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
                 return;
             }
+
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(state.id).trim()}_${safeCourse}`;
+
+            if(state.dbRecords.some(r => r.docId === docId)) {
+                if(!confirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente e imprimir de todos modos?")) {
+                    return; // Se cancela la impresión
+                }
+            }
+
             await window.saveToDB(state.name, state.id);
             await window.loadDBRecords(); // Refrescar lista lateral
             window.print();
