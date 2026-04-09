@@ -560,8 +560,8 @@
                     </div>
                     <div class="mt-2 space-y-1">
                         ${user.courses.map(c => `
-                            <div class="flex justify-between items-center text-[9px] text-gray-600 bg-white border border-gray-200 p-1.5 rounded">
-                                <span class="truncate pr-2 flex-1" title="${c.course}">📘 ${c.course}</span>
+                            <div class="flex justify-between items-center text-[9px] text-gray-600 bg-white border border-gray-200 p-1.5 rounded group/course hover:border-blue-300 transition-colors">
+                                <span class="truncate pr-2 flex-1 cursor-pointer hover:text-blue-600 transition-colors" title="Ver vista previa de este certificado" onclick="previewCertificate('${user.name.replace(/'/g, "\\'")}', '${user.id}', '${c.course.replace(/'/g, "\\'")}')">📘 ${c.course}</span>
                                 <button onclick="deleteRecord('${c.docId}')" class="text-gray-300 hover:text-red-600 transition-colors shrink-0" title="Eliminar este curso específico">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
@@ -588,6 +588,25 @@
             setTimeout(() => {
                 inputNameEl.classList.remove('bg-green-100');
                 inputIdEl.classList.remove('bg-green-100');
+            }, 500);
+        };
+
+        // --- FUNCIÓN DE VISTA PREVIA ESPECÍFICA ---
+        window.previewCertificate = function(name, id, course) {
+            state.name = name;
+            state.id = id;
+            state.course = course;
+            updateDisplay();
+            
+            document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
+            
+            const inputNameEl = document.getElementById('inputName');
+            const inputIdEl = document.getElementById('inputId');
+            const inputCourseEl = document.getElementById('inputCourse');
+            
+            [inputNameEl, inputIdEl, inputCourseEl].forEach(el => el.classList.add('bg-blue-100'));
+            setTimeout(() => {
+                [inputNameEl, inputIdEl, inputCourseEl].forEach(el => el.classList.remove('bg-blue-100'));
             }, 500);
         };
 
