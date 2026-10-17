@@ -24,7 +24,7 @@
             #previewWrapper { display: block !important; padding: 0 !important; background: white !important; overflow: visible !important; position: static !important; }
             #documentScaleWrapper { position: static !important; transform: none !important; left: auto !important; top: auto !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; }
             .print-container { width: 100vw !important; height: 100vh !important; max-width: none !important; box-shadow: none !important; padding: 2rem !important; margin: 0 !important; }
-            svg circle, svg path { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            svg circle, svg path, #qrImageContainer, #qrImageContainer img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
         .hidden { display: none !important; }
         
@@ -46,6 +46,14 @@
         <div class="loader mb-4"></div>
         <h2 class="text-xl font-bold mb-2">Procesando y Guardando...</h2>
         <p id="loadingText" class="text-sm text-gray-300">Conectando con la base de datos en la nube. No cierres esta ventana.</p>
+    </div>
+
+    <!-- Modal de Mensajes y Confirmaciones -->
+    <div id="customModal" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm no-print p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border border-gray-100 text-center">
+            <p id="customModalMessage" class="text-sm text-gray-800 font-medium whitespace-pre-line mb-6"></p>
+            <div id="customModalButtons" class="flex justify-center gap-3"></div>
+        </div>
     </div>
 
     <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
@@ -120,7 +128,10 @@
         <div id="sidebar" class="no-print w-full md:w-[26rem] bg-white border-r border-gray-200 p-6 shadow-lg flex flex-col z-20 h-full overflow-y-auto shrink-0 custom-scrollbar">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800">Panel Administrativo</h2>
-                <button onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-800 underline">Cerrar Sesión</button>
+                <div class="flex items-center gap-3">
+                    <button onclick="resetStudentForm()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline" title="Limpiar formulario para un nuevo estudiante">Limpiar Datos</button>
+                    <button onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-800 underline">Cerrar Sesión</button>
+                </div>
             </div>
             
             <div class="space-y-4 flex-1">
@@ -145,6 +156,36 @@
                     <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Día</label><input type="text" id="inputDay" name="day" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
                     <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Mes</label><input type="text" id="inputMonth" name="month" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
                     <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Año</label><input type="text" id="inputYear" name="year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" /></div>
+                </div>
+
+                <!-- Sección: Código QR -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            Código QR (Superior Derecha)
+                        </h3>
+                        <button type="button" onclick="clearQR()" class="text-[10px] text-red-600 hover:underline font-semibold">Quitar QR</button>
+                    </div>
+                    <div class="bg-red-50/40 p-3 rounded-lg border border-red-200 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <div id="qrSidebarThumb" class="w-12 h-12 rounded border border-gray-300 bg-white flex items-center justify-center shrink-0 overflow-hidden text-[9px] text-gray-400 text-center leading-tight p-1">
+                                Sin QR
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <label id="qrStatusLabel" class="block text-[10px] font-semibold text-gray-700 uppercase mb-1">Subir Imagen QR Única</label>
+                                <input type="file" id="uploadQR" accept="image/*" class="w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer" />
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-gray-200 mt-2">
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Tamaño (%)</label>
+                            <input type="range" id="inputQrSize" name="qrSize" min="20" max="250" value="100" class="w-full accent-red-600" />
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↔ (X)</label><input type="range" id="inputQrX" name="qrX" min="-150" max="150" value="0" class="w-full accent-red-600" /></div>
+                                <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↕ (Y)</label><input type="range" id="inputQrY" name="qrY" min="-100" max="100" value="0" class="w-full accent-red-600" /></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sección: Excel Masivo -->
@@ -224,9 +265,10 @@
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Correo Electrónico</label><input type="text" id="inputEmail" name="email" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Dirección</label><input type="text" id="inputAddress" name="address" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Teléfono</label><input type="text" id="inputPhone" name="phone" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">URL Web</label><input type="text" id="inputWebsite" name="website" placeholder="Ej: www.funetec.edu.co" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                     </div>
                     
-                    <!-- NUEVO BOTÓN: Guardar Configuración -->
+                    <!-- Botón: Guardar Configuración -->
                     <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full mt-5 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-2.5 rounded-lg font-bold hover:bg-blue-100 transition-colors shadow-sm border border-blue-200 text-[10px] sm:text-xs">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                         GUARDAR CONFIGURACIÓN COMO PREDETERMINADA
@@ -235,6 +277,10 @@
                 
                 <!-- Botones Individuales Separados -->
                 <div class="mt-6 pt-6 border-t border-gray-200 flex flex-col gap-3 pb-8">
+                    <button onclick="downloadIndividualPDF()" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        DESCARGAR PDF
+                    </button>
                     <button onclick="printAndSaveIndividual()" class="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                         IMPRIMIR
@@ -259,6 +305,14 @@
             <div id="documentScaleWrapper" class="absolute top-1/2 left-1/2 origin-center transition-transform duration-200 ease-out" style="width: 1056px; height: 816px;">
                 <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-12 pb-10 px-16 font-sans-body">
                     
+                    <!-- Código QR (Superior Derecha) -->
+                    <div id="qrImageContainer" class="absolute top-10 right-16 w-28 h-28 flex items-center justify-center z-20 overflow-visible">
+                        <div onclick="document.getElementById('uploadQR').click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 hover:border-red-500 hover:bg-red-50/50 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all text-gray-400 hover:text-red-600 p-2 text-center" title="Haz clic para subir tu imagen QR">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
+                        </div>
+                    </div>
+
                     <div class="text-center w-full relative z-10">
                         <div class="flex flex-col items-center">
                             <div class="mb-4 mt-2"><img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" class="h-32 w-auto mx-auto object-contain" crossorigin="anonymous" /></div>
@@ -303,10 +357,11 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap justify-between items-center px-10 mt-4 text-[11px] font-bold text-gray-800 relative z-10 pb-2">
-                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M5.5 8C5.22 8 5 8.22 5 8.5v7c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-7c0-.28-.22-.5-.5-.5h-13zm0 1.5h13v.5l-6.5 4-6.5-4v-.5z" fill="white"/></svg><span id="displayEmail"></span></div>
-                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#d32f2f"/></svg><span id="displayAddress"></span></div>
-                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M16.9 14.44c-.78 0-1.55-.12-2.28-.36a.88.88 0 0 0-.89.21l-1.4 1.4c-1.83-.93-3.32-2.42-4.25-4.25l1.4-1.4a.88.88 0 0 0 .21-.89 6.8 6.8 0 0 1-.36-2.28c0-.49-.4-.88-.88-.88H5.38C4.9 6 4.5 6.4 4.5 6.88 4.5 13.63 10 19.12 16.75 19.12c.49 0 .88-.4.88-.88v-2.92c0-.48-.4-.88-.88-.88z" fill="white"/></svg><span id="displayPhone"></span></div>
+                    <div class="flex flex-wrap justify-between items-center px-6 mt-4 text-[11px] font-bold text-gray-800 relative z-10 pb-2">
+                        <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M5.5 8C5.22 8 5 8.22 5 8.5v7c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-7c0-.28-.22-.5-.5-.5h-13zm0 1.5h13v.5l-6.5 4-6.5-4v-.5z" fill="white"/></svg><span id="displayEmail"></span></div>
+                        <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#d32f2f"/></svg><span id="displayAddress"></span></div>
+                        <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M16.9 14.44c-.78 0-1.55-.12-2.28-.36a.88.88 0 0 0-.89.21l-1.4 1.4c-1.83-.93-3.32-2.42-4.25-4.25l1.4-1.4a.88.88 0 0 0 .21-.89 6.8 6.8 0 0 1-.36-2.28c0-.49-.4-.88-.88-.88H5.38C4.9 6 4.5 6.4 4.5 6.88 4.5 13.63 10 19.12 16.75 19.12c.49 0 .88-.4.88-.88v-2.92c0-.48-.4-.88-.88-.88z" fill="white"/></svg><span id="displayPhone"></span></div>
+                        <div id="websiteContainer" class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm5.9 7h-2.95c-.12-1.85-.6-3.54-1.38-4.88A6.02 6.02 0 0 1 17.9 11zM12 5.04c.83 1.2 1.48 2.94 1.62 4.96h-3.24c.14-2.02.79-3.76 1.62-4.96zM5.04 13h2.95c.12 1.85.6 3.54 1.38 4.88A6.02 6.02 0 0 1 5.04 13zm2.95-2H5.04a6.02 6.02 0 0 1 4.33-4.88C8.59 7.46 8.11 9.15 7.99 11zm4.01 7.96c-.83-1.2-1.48-2.94-1.62-4.96h3.24c-.14 2.02-.79 3.76-1.62 4.96zm2.63-1.08c.78-1.34 1.26-3.03 1.38-4.88h2.95a6.02 6.02 0 0 1-4.33 4.88z" fill="white"/></svg><span id="displayWebsite"></span></div>
                     </div>
                 </div>
             </div>
@@ -341,9 +396,10 @@
         const state = { 
             name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
             validityType: 'aplica', validityYears: '2', 
+            qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
             sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
             sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
-            email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679',
+            email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679', website: 'cofunetec.vercel.app',
             bulkStudents: [],
             dbRecords: [] // Registros de Firebase para la lista del panel
         };
@@ -397,9 +453,44 @@
         window.addEventListener('resize', adjustScale);
 
         // --- FUNCIONES DE CONFIGURACIÓN DE FIRMAS (FIREBASE) ---
+        window.showNotice = function(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const msgEl = document.getElementById('customModalMessage');
+                const btnsEl = document.getElementById('customModalButtons');
+                msgEl.textContent = message;
+                btnsEl.innerHTML = `<button id="modalOkBtn" class="bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg text-xs transition-colors shadow">Aceptar</button>`;
+                modal.classList.remove('hidden');
+                document.getElementById('modalOkBtn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(true);
+                };
+            });
+        };
+
+        window.showConfirm = function(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const msgEl = document.getElementById('customModalMessage');
+                const btnsEl = document.getElementById('customModalButtons');
+                msgEl.textContent = message;
+                btnsEl.innerHTML = `
+                    <button id="modalCancelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg text-xs transition-colors">Cancelar</button>
+                    <button id="modalConfirmBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors shadow">Confirmar</button>
+                `;
+                modal.classList.remove('hidden');
+                document.getElementById('modalCancelBtn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(false);
+                };
+                document.getElementById('modalConfirmBtn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(true);
+                };
+            });
+        };
+
         window.saveSignatureConfig = async function() {
-            if(!auth.currentUser) return alert("Debes estar conectado con la base de datos para guardar la configuración.");
-            
             const btn = document.getElementById('btnSaveSigns');
             const originalText = btn.innerHTML;
             btn.innerHTML = 'Guardando...';
@@ -423,23 +514,61 @@
                     
                     email: state.email,
                     address: state.address,
-                    phone: state.phone
+                    phone: state.phone,
+                    website: state.website || ''
                 });
-                alert("¡Configuración guardada! Las firmas, nombres y datos de contacto cargarán automáticamente la próxima vez que entres.");
+                await window.showNotice("¡Configuración predeterminada guardada! Las firmas y datos de contacto cargarán automáticamente la próxima vez que entres.");
             } catch(error) {
                 console.error("Error guardando configuración:", error);
-                
-                // Mejor manejo de errores para que sepas exactamente qué falló
                 if (error.code === 'permission-denied') {
-                    alert("⚠️ Error de Permisos en Firebase:\nTu base de datos está bloqueando el guardado. Necesitas ir a Firebase > Firestore Database > Reglas (Rules) y asegurarte de permitir la escritura (write: if true;) en la colección 'configuracion'.");
+                    await window.showNotice("⚠️ Error de Permisos en Firebase:\nTu base de datos está bloqueando el guardado. Asegúrate de permitir escritura en la colección 'configuracion'.");
                 } else if (error.message && error.message.includes('exceed')) {
-                    alert("⚠️ Error de Tamaño:\nLas imágenes de las firmas siguen siendo demasiado pesadas. Intenta con una imagen más sencilla.");
+                    await window.showNotice("⚠️ Error de Tamaño:\nLas imágenes siguen siendo demasiado pesadas. Intenta con una imagen más sencilla.");
                 } else {
-                    alert("Error al guardar en la nube: " + error.message);
+                    await window.showNotice("Error al guardar en la nube: " + error.message);
                 }
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
+            }
+        };
+
+        window.renderQRBox = function() {
+            const container = document.getElementById('qrImageContainer');
+            const sidebarThumb = document.getElementById('qrSidebarThumb');
+            const statusLabel = document.getElementById('qrStatusLabel');
+            if (!container) return;
+
+            const sizePx = Math.round(112 * (Number(state.qrSize || 100) / 100));
+            const topPx = 40 + Number(state.qrY || 0) - Math.round((sizePx - 112) / 2);
+            const rightPx = 64 - Number(state.qrX || 0) - Math.round((sizePx - 112) / 2);
+
+            container.style.top = `${topPx}px`;
+            container.style.right = `${rightPx}px`;
+            container.style.width = `${sizePx}px`;
+            container.style.height = `${sizePx}px`;
+
+            if (state.qrImage) {
+                container.innerHTML = `<img id="qrActiveImg" src="${state.qrImage}" width="${sizePx}" height="${sizePx}" alt="QR" style="width: ${sizePx}px; height: ${sizePx}px; object-fit: contain; display: block;" class="relative z-10 cursor-pointer" onclick="document.getElementById('uploadQR').click()" title="Haz clic para cambiar la imagen QR" />`;
+                if (sidebarThumb) {
+                    sidebarThumb.innerHTML = `<img src="${state.qrImage}" alt="QR Mini" class="w-full h-full object-contain" />`;
+                }
+                if (statusLabel) {
+                    statusLabel.innerHTML = `QR Único Activo <span class="text-green-600 font-bold">(Cargado)</span>`;
+                }
+            } else {
+                container.innerHTML = `
+                    <div onclick="document.getElementById('uploadQR').click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 hover:border-red-500 hover:bg-red-50/50 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all text-gray-400 hover:text-red-600 p-2 text-center" title="Haz clic para subir tu imagen QR">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
+                    </div>
+                `;
+                if (sidebarThumb) {
+                    sidebarThumb.innerHTML = `Sin QR`;
+                }
+                if (statusLabel) {
+                    statusLabel.textContent = `Subir Imagen QR Única`;
+                }
             }
         };
 
@@ -448,15 +577,23 @@
                 const docSnap = await getDoc(doc(db, "configuracion", "firmas"));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    Object.assign(state, data); // Actualiza el estado con los datos recuperados
+                    // Solo aplicamos firmas y contacto predeterminados para no borrar el QR único del estudiante
+                    const configKeys = [
+                        'sign1Name', 'sign1Role', 'sign1Size', 'sign1X', 'sign1Y', 'sign1Image',
+                        'sign2Name', 'sign2Role', 'sign2Size', 'sign2X', 'sign2Y', 'sign2Image',
+                        'email', 'address', 'phone', 'website'
+                    ];
+                    configKeys.forEach(k => {
+                        if (data[k] !== undefined) state[k] = data[k];
+                    });
                     
-                    // Renderizar las imágenes guardadas en el Canvas si existen
                     [1, 2].forEach(n => {
                         if(state[`sign${n}Image`]) {
                             document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${state[`sign${n}Image`]}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
                         }
                     });
-                    
+
+                    window.renderQRBox();
                     updateDisplay();
                 }
             } catch (error) {
@@ -466,29 +603,55 @@
 
         // --- FUNCIONES DE BASE DE DATOS (FIREBASE) ---
         window.saveToDB = async function(studentName, studentId) {
-            if(!studentName || !studentId || !auth.currentUser) return;
+            if(!studentName || !studentId) return;
             
             let isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
             let expYear = parseInt(state.year) + parseInt(state.validityYears);
             
-            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const safeCourse = (state.course || 'SIN_CURSO').replace(/[^a-zA-Z0-9]/g, '');
             const docId = `${String(studentId).trim()}_${safeCourse}`;
 
             try {
-                // Mantener la fecha original si el registro ya existe, para que no salte en la lista
                 const existingRecord = state.dbRecords.find(r => r.docId === docId);
                 const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
 
                 await setDoc(doc(db, "certificados", docId), {
                     id: String(studentId).trim(),
                     name: String(studentName).trim().toUpperCase(),
-                    course: state.course.toUpperCase(),
+                    course: String(state.course || '').trim().toUpperCase(),
+                    hours: String(state.hours ?? ''),
+                    day: String(state.day ?? ''),
+                    month: String(state.month ?? ''),
+                    year: String(state.year ?? ''),
+                    validityType: state.validityType || 'aplica',
+                    validityYears: String(state.validityYears ?? '2'),
+                    qrImage: state.qrImage || '',
+                    qrSize: Number(state.qrSize || 100),
+                    qrX: Number(state.qrX || 0),
+                    qrY: Number(state.qrY || 0),
+                    sign1Name: state.sign1Name || '',
+                    sign1Role: state.sign1Role || '',
+                    sign1Size: Number(state.sign1Size || 100),
+                    sign1X: Number(state.sign1X || 0),
+                    sign1Y: Number(state.sign1Y || 0),
+                    sign1Image: state.sign1Image || '',
+                    sign2Name: state.sign2Name || '',
+                    sign2Role: state.sign2Role || '',
+                    sign2Size: Number(state.sign2Size || 100),
+                    sign2X: Number(state.sign2X || 0),
+                    sign2Y: Number(state.sign2Y || 0),
+                    sign2Image: state.sign2Image || '',
+                    email: state.email || '',
+                    address: state.address || '',
+                    phone: state.phone || '',
+                    website: state.website || '',
                     expYear: isIndefinite ? 9999 : expYear,
                     isIndefinite: isIndefinite,
                     dateAdded: dateAdded
                 });
             } catch (error) {
                 console.error("Error al guardar en Firebase:", error);
+                throw error;
             }
         };
 
@@ -501,10 +664,8 @@
                 querySnapshot.forEach((doc) => {
                     state.dbRecords.push({ docId: doc.id, ...doc.data() });
                 });
-                // Ordenar por más recientes
                 state.dbRecords.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
                 
-                // Mantener el estado de la búsqueda actual (o dejar vacío/oculto si no hay texto)
                 const currentSearch = document.getElementById('searchDBInput')?.value || '';
                 window.renderDBList(currentSearch);
             } catch (error) {
@@ -519,16 +680,15 @@
             
             const term = searchTerm.toLowerCase().trim();
             
-            // Ocultar la lista si el buscador está vacío
             if (term === '') {
                 container.innerHTML = '';
                 return;
             }
 
             const filtered = state.dbRecords.filter(r => 
-                r.name.toLowerCase().includes(term) || 
-                r.id.toLowerCase().includes(term) ||
-                r.course.toLowerCase().includes(term)
+                (r.name && r.name.toLowerCase().includes(term)) || 
+                (r.id && r.id.toLowerCase().includes(term)) ||
+                (r.course && r.course.toLowerCase().includes(term))
             );
 
             if(filtered.length === 0) {
@@ -536,10 +696,9 @@
                 return;
             }
 
-            // Agrupar por cédula de ciudadanía para unificar los estudiantes
             const grouped = {};
             filtered.forEach(r => {
-                const key = r.id; // Clave única de agrupación
+                const key = r.id;
                 if (!grouped[key]) {
                     grouped[key] = {
                         name: r.name,
@@ -550,78 +709,156 @@
                 grouped[key].courses.push(r);
             });
 
-            // Renderizar listado agrupado
-            container.innerHTML = Object.values(grouped).map(user => `
+            container.innerHTML = Object.values(grouped).map(user => {
+                const latestDocId = user.courses[0].docId;
+                return `
                 <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                    <div class="flex justify-between items-center cursor-pointer hover:bg-gray-200 p-1.5 -mx-1 -mt-1 rounded transition-colors group" onclick="fillUserData('${user.name.replace(/'/g, "\\'")}', '${user.id}')" title="Clic para agregar otro curso al estudiante">
+                    <div class="flex justify-between items-center cursor-pointer hover:bg-blue-50 p-1.5 -mx-1 -mt-1 rounded transition-colors group" onclick="previewCertificate('${latestDocId}')" title="Clic para cargar todos los datos guardados del estudiante">
                         <div class="overflow-hidden pr-2 flex-1">
-                            <p class="text-[11px] font-bold text-gray-800 truncate" title="${user.name}">${user.name}</p>
+                            <p class="text-[11px] font-bold text-gray-800 group-hover:text-blue-700 truncate" title="${user.name}">${user.name}</p>
                             <p class="text-[9px] text-gray-500 font-semibold truncate">C.C. ${user.id} <span class="text-gray-400 font-normal">(${user.courses.length} curso${user.courses.length > 1 ? 's' : ''})</span></p>
                         </div>
-                        <div class="text-gray-400 group-hover:text-red-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" title="Autocompletar"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                        </div>
+                        <button onclick="event.stopPropagation(); fillUserDataForNewCourse('${latestDocId}')" class="text-[9px] bg-white border border-gray-300 hover:border-red-500 hover:text-red-600 text-gray-700 font-semibold px-2 py-1 rounded shadow-sm transition-colors shrink-0" title="Cargar datos del alumno para añadir otro curso nuevo">
+                            + Curso
+                        </button>
                     </div>
                     <div class="mt-2 space-y-1">
                         ${user.courses.map(c => `
-                            <div class="flex justify-between items-center text-[9px] text-gray-600 bg-white border border-gray-200 p-1.5 rounded group/course hover:border-blue-300 transition-colors">
-                                <span class="truncate pr-2 flex-1 cursor-pointer hover:text-blue-600 transition-colors" title="Ver vista previa de este certificado" onclick="previewCertificate('${user.name.replace(/'/g, "\\'")}', '${user.id}', '${c.course.replace(/'/g, "\\'")}')">📘 ${c.course}</span>
-                                <button onclick="deleteRecord('${c.docId}')" class="text-gray-300 hover:text-red-600 transition-colors shrink-0" title="Eliminar este curso específico">
+                            <div class="flex justify-between items-center text-[9px] text-gray-600 bg-white border border-gray-200 p-1.5 rounded group/course hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
+                                <span class="truncate pr-2 flex-1 cursor-pointer hover:text-blue-700 font-medium transition-colors flex items-center gap-1" title="Cargar todos los datos y QR de este certificado" onclick="previewCertificate('${c.docId}')">
+                                    <span>📘 ${c.course}</span>
+                                    ${c.qrImage ? `<span class="bg-green-100 text-green-700 border border-green-200 px-1 py-0.2 rounded text-[8px] font-bold shrink-0">QR</span>` : ''}
+                                </span>
+                                <button onclick="deleteRecord('${c.docId}')" class="text-gray-300 hover:text-red-600 transition-colors shrink-0 ml-1" title="Eliminar este curso específico">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                             </div>
                         `).join('')}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         };
 
-        // --- FUNCIÓN DE AUTOCOMPLETADO (NUEVA) ---
-        window.fillUserData = function(name, id) {
-            state.name = name;
-            state.id = id;
+        // --- FUNCIÓN PARA LIMPIAR FORMULARIO ---
+        window.resetStudentForm = function() {
+            state.name = '';
+            state.id = '';
+            state.course = '';
+            state.qrImage = '';
+            state.qrSize = 100;
+            state.qrX = 0;
+            state.qrY = 0;
+            const qrInput = document.getElementById('uploadQR');
+            if (qrInput) qrInput.value = '';
+            window.renderQRBox();
             updateDisplay();
-            // Desplazar visualmente hacia arriba por si el panel es muy largo
-            document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // Animación visual suave para indicar que se llenó
-            const inputNameEl = document.getElementById('inputName');
-            const inputIdEl = document.getElementById('inputId');
-            inputNameEl.classList.add('bg-green-100');
-            inputIdEl.classList.add('bg-green-100');
-            setTimeout(() => {
-                inputNameEl.classList.remove('bg-green-100');
-                inputIdEl.classList.remove('bg-green-100');
-            }, 500);
         };
 
-        // --- FUNCIÓN DE VISTA PREVIA ESPECÍFICA ---
-        window.previewCertificate = function(name, id, course) {
-            state.name = name;
-            state.id = id;
-            state.course = course;
+        // --- FUNCIÓN PARA AGREGAR OTRO CURSO A UN USUARIO EXISTENTE ---
+        window.fillUserDataForNewCourse = function(docId) {
+            const record = state.dbRecords.find(r => r.docId === docId);
+            if (!record) return;
+
+            state.name = record.name || '';
+            state.id = record.id || '';
+            state.course = ''; // Se deja el curso en blanco para escribir el nuevo
+            state.qrImage = ''; // Se limpia el QR por si el nuevo curso lleva un QR distinto
+            const qrInput = document.getElementById('uploadQR');
+            if (qrInput) qrInput.value = '';
+
+            window.renderQRBox();
             updateDisplay();
-            
             document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
             
             const inputNameEl = document.getElementById('inputName');
             const inputIdEl = document.getElementById('inputId');
             const inputCourseEl = document.getElementById('inputCourse');
-            
-            [inputNameEl, inputIdEl, inputCourseEl].forEach(el => el.classList.add('bg-blue-100'));
+            inputNameEl.classList.add('bg-green-100');
+            inputIdEl.classList.add('bg-green-100');
+            inputCourseEl.focus();
             setTimeout(() => {
-                [inputNameEl, inputIdEl, inputCourseEl].forEach(el => el.classList.remove('bg-blue-100'));
-            }, 500);
+                inputNameEl.classList.remove('bg-green-100');
+                inputIdEl.classList.remove('bg-green-100');
+            }, 600);
+        };
+
+        // --- FUNCIÓN DE CARGA COMPLETA Y VISTA PREVIA DEL CERTIFICADO ---
+        window.previewCertificate = function(docId) {
+            const record = state.dbRecords.find(r => r.docId === docId);
+            if (!record) return;
+
+            // Cargar todos los datos del estudiante y del curso guardado
+            state.name = record.name ?? '';
+            state.id = record.id ?? '';
+            state.course = record.course ?? '';
+            if (record.hours !== undefined && record.hours !== '') state.hours = record.hours;
+            if (record.day !== undefined && record.day !== '') state.day = record.day;
+            if (record.month !== undefined && record.month !== '') state.month = record.month;
+            if (record.year !== undefined && record.year !== '') state.year = record.year;
+            if (record.validityType !== undefined && record.validityType !== '') state.validityType = record.validityType;
+            if (record.validityYears !== undefined && record.validityYears !== '') state.validityYears = record.validityYears;
+
+            // Cargar el QR único guardado para este certificado
+            state.qrImage = record.qrImage || '';
+            state.qrSize = record.qrSize !== undefined ? record.qrSize : 100;
+            state.qrX = record.qrX !== undefined ? record.qrX : 0;
+            state.qrY = record.qrY !== undefined ? record.qrY : 0;
+            const qrInput = document.getElementById('uploadQR');
+            if (qrInput) qrInput.value = '';
+
+            // Cargar firmas y datos de contacto si fueron guardados con el certificado
+            if (record.sign1Name !== undefined && record.sign1Name !== '') state.sign1Name = record.sign1Name;
+            if (record.sign1Role !== undefined && record.sign1Role !== '') state.sign1Role = record.sign1Role;
+            if (record.sign1Size !== undefined) state.sign1Size = record.sign1Size;
+            if (record.sign1X !== undefined) state.sign1X = record.sign1X;
+            if (record.sign1Y !== undefined) state.sign1Y = record.sign1Y;
+            if (record.sign1Image) {
+                state.sign1Image = record.sign1Image;
+                document.getElementById('sign1ImageContainer').innerHTML = `<img src="${state.sign1Image}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+            }
+
+            if (record.sign2Name !== undefined && record.sign2Name !== '') state.sign2Name = record.sign2Name;
+            if (record.sign2Role !== undefined && record.sign2Role !== '') state.sign2Role = record.sign2Role;
+            if (record.sign2Size !== undefined) state.sign2Size = record.sign2Size;
+            if (record.sign2X !== undefined) state.sign2X = record.sign2X;
+            if (record.sign2Y !== undefined) state.sign2Y = record.sign2Y;
+            if (record.sign2Image) {
+                state.sign2Image = record.sign2Image;
+                document.getElementById('sign2ImageContainer').innerHTML = `<img src="${state.sign2Image}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+            }
+
+            if (record.email !== undefined && record.email !== '') state.email = record.email;
+            if (record.address !== undefined && record.address !== '') state.address = record.address;
+            if (record.phone !== undefined && record.phone !== '') state.phone = record.phone;
+            if (record.website !== undefined) state.website = record.website;
+
+            window.renderQRBox();
+            updateDisplay();
+            
+            document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
+            
+            const highlightIds = ['inputName', 'inputId', 'inputCourse', 'inputHours', 'inputDay', 'inputMonth', 'inputYear', 'inputValidityType', 'inputValidityYears'];
+            highlightIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('bg-blue-100');
+            });
+            setTimeout(() => {
+                highlightIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('bg-blue-100');
+                });
+            }, 600);
         };
 
         window.deleteRecord = async function(docId) {
-            if(!confirm("¿Estás seguro de que deseas eliminar este certificado de la base de datos?\n\nEsta acción no se puede deshacer y el estudiante ya no podrá verificarlo.")) return;
+            const confirmed = await window.showConfirm("¿Estás seguro de que deseas eliminar este certificado de la base de datos?\n\nEsta acción no se puede deshacer y el estudiante ya no podrá verificarlo.");
+            if(!confirmed) return;
             try {
                 await deleteDoc(doc(db, "certificados", docId));
-                await window.loadDBRecords(); // Refrescar lista
+                await window.loadDBRecords();
             } catch(error) {
                 console.error("Error eliminando documento:", error);
-                alert("Error al eliminar el registro. Revisa la conexión.");
+                await window.showNotice("Error al eliminar el registro. Revisa la conexión.");
             }
         };
 
@@ -700,12 +937,17 @@
 
         // --- LÓGICA DE ACTUALIZACIÓN VISUAL ---
         function updateDisplay() {
-            const fields = ['Name', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone'];
+            const fields = ['Name', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone', 'Website'];
             fields.forEach(f => {
                 const k = f.charAt(0).toLowerCase() + f.slice(1);
                 if(document.getElementById('display'+f)) document.getElementById('display'+f).textContent = state[k];
                 if(document.getElementById('input'+f)) document.getElementById('input'+f).value = state[k];
             });
+
+            const webContainer = document.getElementById('websiteContainer');
+            if (webContainer) {
+                webContainer.style.display = (state.website && state.website.trim() !== '') ? 'flex' : 'none';
+            }
 
             const valContainer = document.getElementById('validityContainer');
             const inputValYears = document.getElementById('inputValidityYears');
@@ -736,6 +978,12 @@
                 }
                 ['Size', 'X', 'Y'].forEach(p => document.getElementById(`inputSign${n}${p}`).value = state[`sign${n}${p}`]);
             });
+
+            window.renderQRBox();
+            ['Size', 'X', 'Y'].forEach(p => {
+                const inp = document.getElementById(`inputQr${p}`);
+                if(inp) inp.value = state[`qr${p}`];
+            });
         }
 
         // Event Listeners Básicos
@@ -744,6 +992,47 @@
                 inp.addEventListener('input', e => { state[e.target.name] = e.target.value; updateDisplay(); });
             }
         });
+
+        // Subida y ajuste de Código QR
+        document.getElementById('uploadQR').addEventListener('change', e => {
+            if(e.target.files[0]) {
+                const r = new FileReader();
+                r.onload = ev => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 400;
+                        if (width > MAX_SIZE || height > MAX_SIZE) {
+                            if (width > height) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            } else {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        state.qrImage = canvas.toDataURL('image/png');
+                        window.renderQRBox();
+                        updateDisplay();
+                    };
+                    img.src = ev.target.result;
+                };
+                r.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        window.clearQR = function() {
+            state.qrImage = '';
+            document.getElementById('uploadQR').value = '';
+            window.renderQRBox();
+            updateDisplay();
+        };
 
         // Subida de Firmas con compresión automática
         [1, 2].forEach(n => {
@@ -756,8 +1045,6 @@
                             const canvas = document.createElement('canvas');
                             let width = img.width;
                             let height = img.height;
-                            
-                            // Redimensionar si es muy grande para no saturar Firebase (límite 1MB)
                             const MAX_SIZE = 400; 
                             if (width > MAX_SIZE || height > MAX_SIZE) {
                                 if (width > height) {
@@ -773,7 +1060,6 @@
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             
-                            // Convertir imagen a Base64 comprimida en PNG para mantener transparencia
                             const compressedBase64 = canvas.toDataURL('image/png');
                             state[`sign${n}Image`] = compressedBase64;
                             document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${compressedBase64}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
@@ -786,10 +1072,51 @@
             });
         });
 
-        // --- GUARDADO INDIVIDUAL (SOLO NUBE) ---
-        window.saveIndividualOnly = async function() {
+        // --- GENERACIÓN Y DESCARGA DE PDF CON QR INCRUSTADO ---
+        async function createCertificatePDF() {
+            const { jsPDF } = window.jspdf;
+            const docContainer = document.getElementById('documentContainer');
+            const scaleWrapper = document.getElementById('documentScaleWrapper');
+            const originalTransform = scaleWrapper.style.transform;
+
+            scaleWrapper.style.transform = 'none';
+            window.renderQRBox();
+
+            const qrImgEl = document.getElementById('qrActiveImg');
+            if (qrImgEl && !qrImgEl.complete) {
+                await new Promise(resolve => {
+                    qrImgEl.onload = resolve;
+                    qrImgEl.onerror = resolve;
+                });
+            }
+            await new Promise(resolve => setTimeout(resolve, 60));
+
+            try {
+                const canvas = await window.html2canvas(docContainer, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [1056, 816]
+                });
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
+                return pdf;
+            } finally {
+                scaleWrapper.style.transform = originalTransform;
+            }
+        }
+
+        window.downloadIndividualPDF = async function() {
             if(!state.name || !state.id) {
-                alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de guardar.");
+                await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de descargar el PDF.");
                 return;
             }
 
@@ -797,20 +1124,53 @@
             const docId = `${String(state.id).trim()}_${safeCourse}`;
 
             if(state.dbRecords.some(r => r.docId === docId)) {
-                if(!confirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente con los datos actuales?")) {
-                    return; // Se cancela el guardado
-                }
+                const overwrite = await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas actualizar el registro con los datos/QR actuales y descargar el PDF?");
+                if(!overwrite) return;
+            }
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            loadText.textContent = "Generando PDF con código QR y guardando...";
+            overlay.classList.remove('hidden');
+
+            try {
+                await window.saveToDB(state.name, state.id);
+                await window.loadDBRecords();
+                const pdf = await createCertificatePDF();
+                const safeName = state.name.replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                pdf.save(`CERTIFICADO_${safeName}.pdf`);
+            } catch (error) {
+                console.error("Error generando PDF individual:", error);
+                await window.showNotice("Hubo un error al generar el PDF.");
+            } finally {
+                overlay.classList.add('hidden');
+            }
+        };
+
+        // --- GUARDADO INDIVIDUAL (SOLO NUBE) ---
+        window.saveIndividualOnly = async function() {
+            if(!state.name || !state.id) {
+                await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de guardar.");
+                return;
+            }
+
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(state.id).trim()}_${safeCourse}`;
+
+            if(state.dbRecords.some(r => r.docId === docId)) {
+                const overwrite = await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente con los datos actuales?");
+                if(!overwrite) return;
             }
 
             await window.saveToDB(state.name, state.id);
-            await window.loadDBRecords(); // Refrescar lista lateral
-            alert("¡Certificado guardado exitosamente en la nube!");
+            await window.loadDBRecords();
+            await window.showNotice("¡Certificado guardado exitosamente en la nube!");
         };
 
         // --- IMPRESIÓN Y GUARDADO INDIVIDUAL ---
         window.printAndSaveIndividual = async function() {
             if(!state.name || !state.id) {
-                alert("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
+                await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
                 return;
             }
 
@@ -818,13 +1178,12 @@
             const docId = `${String(state.id).trim()}_${safeCourse}`;
 
             if(state.dbRecords.some(r => r.docId === docId)) {
-                if(!confirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente e imprimir de todos modos?")) {
-                    return; // Se cancela la impresión
-                }
+                const overwrite = await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente e imprimir de todos modos?");
+                if(!overwrite) return;
             }
 
             await window.saveToDB(state.name, state.id);
-            await window.loadDBRecords(); // Refrescar lista lateral
+            await window.loadDBRecords();
             window.print();
         };
 
@@ -834,25 +1193,27 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = window.XLSX.read(data, {type: 'array'});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
                 const rows = window.XLSX.utils.sheet_to_json(firstSheet, {header: 1}); 
-                if(rows.length === 0) return alert("El archivo Excel está vacío.");
+                if(rows.length === 0) {
+                    await window.showNotice("El archivo Excel está vacío.");
+                    return;
+                }
 
                 const headers = rows[0].map(h => String(h).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
                 const nameIdx = headers.findIndex(h => h.includes('nombre'));
                 const idIdx = headers.findIndex(h => h.includes('cedula') || h.includes('identificacion'));
-                const courseIdx = headers.findIndex(h => h.includes('curso')); // Nueva detección de columna Curso
+                const courseIdx = headers.findIndex(h => h.includes('curso'));
 
                 if(nameIdx === -1) {
-                    alert("No se encontró la columna 'Nombre' en la primera fila del Excel.");
+                    await window.showNotice("No se encontró la columna 'Nombre' en la primera fila del Excel.");
                     return;
                 }
 
-                // Filtrar duplicados y agrupar
                 let duplicatesCount = 0;
                 const studentMap = new Map();
 
@@ -861,12 +1222,12 @@
                     if(row[nameIdx]) {
                         const name = String(row[nameIdx]).trim();
                         const id = idIdx !== -1 && row[idIdx] ? String(row[idIdx]).trim() : '';
-                        const rowCourse = courseIdx !== -1 && row[courseIdx] ? String(row[courseIdx]).trim() : state.course; // Usa el curso del Excel o el general
+                        const rowCourse = courseIdx !== -1 && row[courseIdx] ? String(row[courseIdx]).trim() : state.course;
 
-                        const uniqueKey = `${id}_${rowCourse}`; // Clave única: Cedula + Curso
+                        const uniqueKey = `${id}_${rowCourse}`;
                         
                         if (studentMap.has(uniqueKey)) {
-                            duplicatesCount++; // Se encontró un duplicado exacto
+                            duplicatesCount++;
                         } else {
                             studentMap.set(uniqueKey, { name, id, course: rowCourse });
                         }
@@ -875,7 +1236,6 @@
 
                 state.bulkStudents = Array.from(studentMap.values());
 
-                // Detectar usuarios con múltiples cursos distintos
                 const idCounts = {};
                 state.bulkStudents.forEach(s => {
                     if(s.id) idCounts[s.id] = (idCounts[s.id] || 0) + 1;
@@ -893,9 +1253,9 @@
                         msg += `\n- Tienes ${multipleCoursesCount} estudiante(s) con múltiples cursos distintos asignados correctamente.`;
                     }
                     
-                    alert(msg);
+                    await window.showNotice(msg);
                 } else {
-                    alert("No se encontraron estudiantes válidos en el archivo.");
+                    await window.showNotice("No se encontraron estudiantes válidos en el archivo.");
                     document.getElementById('bulkButtonsContainer').classList.add('hidden');
                 }
             };
@@ -911,51 +1271,25 @@
             overlay.classList.remove('hidden');
 
             const zip = new window.JSZip();
-            const { jsPDF } = window.jspdf;
-            const docContainer = document.getElementById('documentContainer');
-            const scaleWrapper = document.getElementById('documentScaleWrapper');
-            
             const originalName = state.name;
             const originalId = state.id;
-            const originalCourse = state.course; // Guardar curso original
-            const originalTransform = scaleWrapper.style.transform;
-            
-            scaleWrapper.style.transform = 'none'; 
+            const originalCourse = state.course;
             
             try {
                 for(let i = 0; i < state.bulkStudents.length; i++) {
                     const student = state.bulkStudents[i];
-                    loadText.textContent = `Generando y guardando Nube: ${i + 1} de ${state.bulkStudents.length}...`;
+                    loadText.textContent = `Generando PDF con QR y guardando Nube: ${i + 1} de ${state.bulkStudents.length}...`;
 
                     state.name = student.name;
                     state.id = student.id;
-                    state.course = student.course || originalCourse; // Asignar el curso específico del Excel
+                    state.course = student.course || originalCourse;
                     updateDisplay();
                     
-                    // Guardar en la Base de Datos Firebase
                     await window.saveToDB(student.name, student.id);
 
-                    await new Promise(resolve => setTimeout(resolve, 50));
-
-                    const canvas = await window.html2canvas(docContainer, {
-                        scale: 2, 
-                        useCORS: true, 
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    });
-
-                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                    
-                    const pdf = new jsPDF({
-                        orientation: 'landscape',
-                        unit: 'px',
-                        format: [1056, 816]
-                    });
-                    
-                    pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
+                    const pdf = await createCertificatePDF();
                     
                     const safeName = student.name.replace(/[^a-z0-9]/gi, '_').toUpperCase();
-                    // Agregar número aleatorio si hay múltiples cursos para no sobrescribir el PDF en el ZIP
                     const randomSuffix = Math.floor(Math.random() * 1000); 
                     zip.file(`CERTIFICADO_${safeName}_${randomSuffix}.pdf`, pdf.output('blob'));
                 }
@@ -966,15 +1300,14 @@
 
             } catch(error) {
                 console.error(error);
-                alert("Hubo un error generando los archivos. Verifica la consola.");
+                await window.showNotice("Hubo un error generando los archivos. Verifica la consola.");
             } finally {
                 state.name = originalName;
                 state.id = originalId;
-                state.course = originalCourse; // Restaurar curso
+                state.course = originalCourse;
                 updateDisplay();
-                scaleWrapper.style.transform = originalTransform;
                 overlay.classList.add('hidden');
-                await window.loadDBRecords(); // Refrescar lista lateral después del proceso masivo
+                await window.loadDBRecords();
             }
         });
 
@@ -992,18 +1325,17 @@
                     const student = state.bulkStudents[i];
                     loadText.textContent = `Subiendo a la nube: ${i + 1} de ${state.bulkStudents.length}...`;
                     
-                    // Actualizamos state.course en memoria para que saveToDB use el curso correcto
                     state.course = student.course || originalCourse;
                     await window.saveToDB(student.name, student.id);
                 }
-                alert("¡Todos los certificados masivos se subieron exitosamente a la nube!");
+                await window.showNotice("¡Todos los certificados masivos se subieron exitosamente a la nube!");
             } catch(error) {
                 console.error(error);
-                alert("Hubo un error subiendo los archivos a la nube. Verifica la consola.");
+                await window.showNotice("Hubo un error subiendo los archivos a la nube. Verifica la consola.");
             } finally {
-                state.course = originalCourse; // Restaurar curso
+                state.course = originalCourse;
                 overlay.classList.add('hidden');
-                await window.loadDBRecords(); // Refrescar lista lateral después del proceso masivo
+                await window.loadDBRecords();
             }
         });
 
