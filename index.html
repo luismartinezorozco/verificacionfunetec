@@ -24,7 +24,7 @@
             #previewWrapper { display: block !important; padding: 0 !important; background: white !important; overflow: visible !important; position: static !important; }
             #documentScaleWrapper { position: static !important; transform: none !important; left: auto !important; top: auto !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; }
             .print-container { width: 100vw !important; height: 100vh !important; max-width: none !important; box-shadow: none !important; padding: 2rem !important; margin: 0 !important; }
-            svg circle, svg path, #qrImageContainer, #qrImageContainer img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            svg circle, svg path, #qrImageContainer, #qrImageContainer img, #watermarkContainer, #watermarkContainer img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
         .hidden { display: none !important; }
         
@@ -188,6 +188,24 @@
                     </div>
                 </div>
 
+                <!-- Sección: Marca de Agua (Fondo) -->
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-gray-800 uppercase">Marca de Agua (Fondo PDF)</h3>
+                        <select id="inputWatermarkMode" name="watermarkMode" class="px-2 py-1 border border-gray-300 rounded text-[11px] font-semibold bg-white outline-none focus:ring-1 focus:ring-red-500">
+                            <option value="grid">Cuadrícula (Todo el PDF)</option>
+                            <option value="full">Imagen Completa</option>
+                        </select>
+                    </div>
+                    <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+                        <div class="flex justify-between text-[10px] font-semibold text-gray-600 uppercase mb-1">
+                            <span>Intensidad / Visibilidad</span>
+                            <span id="watermarkOpacityValue" class="text-red-600 font-bold">10%</span>
+                        </div>
+                        <input type="range" id="inputWatermarkOpacity" name="watermarkOpacity" min="2" max="100" value="10" class="w-full accent-red-600" />
+                    </div>
+                </div>
+
                 <!-- Sección: Excel Masivo -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-sm font-bold text-gray-800 mb-2">Generación Masiva (Excel)</h3>
@@ -305,6 +323,9 @@
             <div id="documentScaleWrapper" class="absolute top-1/2 left-1/2 origin-center transition-transform duration-200 ease-out" style="width: 1056px; height: 816px;">
                 <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-12 pb-10 px-16 font-sans-body">
                     
+                    <!-- Marca de Agua de Fondo -->
+                    <div id="watermarkContainer" class="absolute inset-0 z-[1] pointer-events-none overflow-hidden flex flex-col justify-between py-6 px-6 select-none"></div>
+
                     <!-- Código QR (Superior Derecha) -->
                     <div id="qrImageContainer" class="absolute top-10 right-16 w-28 h-28 flex items-center justify-center z-20 overflow-visible">
                         <div onclick="document.getElementById('uploadQR').click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 hover:border-red-500 hover:bg-red-50/50 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all text-gray-400 hover:text-red-600 p-2 text-center" title="Haz clic para subir tu imagen QR">
@@ -393,10 +414,15 @@
         signInAnonymously(auth).catch((error) => console.error("Error Auth Firebase:", error));
 
         // ESTADO GLOBAL
+        const WATERMARK_URL_RAW = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
+        const WATERMARK_URL_DIRECT = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
+        const LOGO_URL_FALLBACK = "https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png";
+
         const state = { 
             name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
             validityType: 'aplica', validityYears: '2', 
             qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
+            watermarkMode: 'grid', watermarkOpacity: 10, watermarkProcessedSrc: '', watermarkIsFallbackLogo: false,
             sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
             sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
             email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679', website: 'cofunetec.vercel.app',
@@ -515,7 +541,9 @@
                     email: state.email,
                     address: state.address,
                     phone: state.phone,
-                    website: state.website || ''
+                    website: state.website || '',
+                    watermarkMode: state.watermarkMode || 'grid',
+                    watermarkOpacity: Number(state.watermarkOpacity || 10)
                 });
                 await window.showNotice("¡Configuración predeterminada guardada! Las firmas y datos de contacto cargarán automáticamente la próxima vez que entres.");
             } catch(error) {
@@ -535,26 +563,29 @@
 
         window.renderQRBox = function() {
             const container = document.getElementById('qrImageContainer');
-            const sidebarThumb = document.getElementById('qrSidebarThumb');
+            const thumb = document.getElementById('qrSidebarThumb');
             const statusLabel = document.getElementById('qrStatusLabel');
             if (!container) return;
 
-            const sizePx = Math.round(112 * (Number(state.qrSize || 100) / 100));
-            const topPx = 40 + Number(state.qrY || 0) - Math.round((sizePx - 112) / 2);
-            const rightPx = 64 - Number(state.qrX || 0) - Math.round((sizePx - 112) / 2);
-
-            container.style.top = `${topPx}px`;
-            container.style.right = `${rightPx}px`;
-            container.style.width = `${sizePx}px`;
-            container.style.height = `${sizePx}px`;
-
             if (state.qrImage) {
-                container.innerHTML = `<img id="qrActiveImg" src="${state.qrImage}" width="${sizePx}" height="${sizePx}" alt="QR" style="width: ${sizePx}px; height: ${sizePx}px; object-fit: contain; display: block;" class="relative z-10 cursor-pointer" onclick="document.getElementById('uploadQR').click()" title="Haz clic para cambiar la imagen QR" />`;
-                if (sidebarThumb) {
-                    sidebarThumb.innerHTML = `<img src="${state.qrImage}" alt="QR Mini" class="w-full h-full object-contain" />`;
+                const baseSize = 112;
+                const scale = (Number(state.qrSize) || 100) / 100;
+                const finalSize = Math.round(baseSize * scale);
+                const offsetX = Number(state.qrX) || 0;
+                const offsetY = Number(state.qrY) || 0;
+
+                container.innerHTML = `
+                    <img id="qrActiveImg" src="${state.qrImage}" alt="Código QR" 
+                        style="width: ${finalSize}px; height: ${finalSize}px; max-width: none; max-height: none; transform: translate(${offsetX}px, ${offsetY}px); object-fit: contain;" 
+                        class="relative z-20 block select-none" />
+                `;
+                if (thumb) {
+                    thumb.innerHTML = `<img src="${state.qrImage}" alt="QR" class="w-full h-full object-contain" />`;
                 }
                 if (statusLabel) {
-                    statusLabel.innerHTML = `QR Único Activo <span class="text-green-600 font-bold">(Cargado)</span>`;
+                    statusLabel.textContent = "QR Único Activo (Cargado)";
+                    statusLabel.classList.remove('text-gray-700');
+                    statusLabel.classList.add('text-green-700');
                 }
             } else {
                 container.innerHTML = `
@@ -563,13 +594,105 @@
                         <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
                     </div>
                 `;
-                if (sidebarThumb) {
-                    sidebarThumb.innerHTML = `Sin QR`;
+                if (thumb) {
+                    thumb.innerHTML = 'Sin QR';
                 }
                 if (statusLabel) {
-                    statusLabel.textContent = `Subir Imagen QR Única`;
+                    statusLabel.textContent = "Subir Imagen QR Única";
+                    statusLabel.classList.remove('text-green-700');
+                    statusLabel.classList.add('text-gray-700');
                 }
             }
+        };
+
+        window.renderWatermark = function() {
+            const container = document.getElementById('watermarkContainer');
+            if (!container) return;
+
+            const srcToUse = state.watermarkProcessedSrc || WATERMARK_URL_RAW;
+            const rawOpacity = Number(state.watermarkOpacity ?? 10);
+            const opacityFraction = Math.max(0.02, Math.min(1, rawOpacity / 100));
+            const opacityLabel = document.getElementById('watermarkOpacityValue');
+            if (opacityLabel) opacityLabel.textContent = `${rawOpacity}%`;
+
+            if (state.watermarkMode === 'full') {
+                container.className = "absolute inset-0 z-[1] pointer-events-none overflow-hidden flex items-center justify-center select-none";
+                container.innerHTML = `<img src="${srcToUse}" onerror="if(this.src !== '${WATERMARK_URL_DIRECT}' && this.src !== '${LOGO_URL_FALLBACK}') { this.src='${WATERMARK_URL_DIRECT}'; } else if(this.src !== '${LOGO_URL_FALLBACK}') { this.src='${LOGO_URL_FALLBACK}'; }" alt="" style="width: 100%; height: 100%; object-fit: cover; opacity: ${opacityFraction};" />`;
+            } else {
+                container.className = "absolute inset-0 z-[1] pointer-events-none overflow-hidden flex flex-col justify-between py-6 px-6 select-none";
+                let rowsHtml = '';
+                for (let r = 0; r < 6; r++) {
+                    let colsHtml = '';
+                    for (let c = 0; c < 7; c++) {
+                        colsHtml += `
+                            <div class="flex items-center justify-center">
+                                <img src="${srcToUse}" onerror="if(this.src !== '${WATERMARK_URL_DIRECT}' && this.src !== '${LOGO_URL_FALLBACK}') { this.src='${WATERMARK_URL_DIRECT}'; } else if(this.src !== '${LOGO_URL_FALLBACK}') { this.src='${LOGO_URL_FALLBACK}'; }" alt="" style="width: 75px; height: auto; max-height: 75px; object-fit: contain; opacity: ${opacityFraction};" />
+                            </div>
+                        `;
+                    }
+                    rowsHtml += `<div class="grid grid-cols-7 gap-2 w-full items-center">${colsHtml}</div>`;
+                }
+                container.innerHTML = rowsHtml;
+            }
+        };
+
+        window.initWatermark = function() {
+            window.renderWatermark();
+
+            const candidateUrls = [
+                WATERMARK_URL_RAW,
+                WATERMARK_URL_DIRECT,
+                `https://wsrv.nl/?url=${encodeURIComponent(WATERMARK_URL_RAW)}&output=png`,
+                `https://corsproxy.io/?${encodeURIComponent(WATERMARK_URL_RAW)}`,
+                LOGO_URL_FALLBACK
+            ];
+
+            const tryLoadCORS = (index) => {
+                if (index >= candidateUrls.length) return;
+                const currentUrl = candidateUrls[index];
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                    try {
+                        const w = img.naturalWidth || img.width;
+                        const h = img.naturalHeight || img.height;
+                        if (!w || !h) {
+                            tryLoadCORS(index + 1);
+                            return;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        const imgData = ctx.getImageData(0, 0, w, h);
+                        const data = imgData.data;
+
+                        for (let y = 0; y < h; y++) {
+                            for (let x = 0; x < w; x++) {
+                                const idx = (y * w + x) * 4;
+                                const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+
+                                // Hacer transparente el fondo blanco para que no tape nada
+                                if (r > 245 && g > 245 && b > 245) {
+                                    data[idx + 3] = 0;
+                                }
+                            }
+                        }
+
+                        ctx.putImageData(imgData, 0, 0);
+                        state.watermarkProcessedSrc = canvas.toDataURL('image/png');
+                        updateDisplay();
+                    } catch (e) {
+                        tryLoadCORS(index + 1);
+                    }
+                };
+                img.onerror = () => tryLoadCORS(index + 1);
+                img.src = currentUrl;
+            };
+
+            tryLoadCORS(0);
         };
 
         window.loadSignatureConfig = async function() {
@@ -581,7 +704,7 @@
                     const configKeys = [
                         'sign1Name', 'sign1Role', 'sign1Size', 'sign1X', 'sign1Y', 'sign1Image',
                         'sign2Name', 'sign2Role', 'sign2Size', 'sign2X', 'sign2Y', 'sign2Image',
-                        'email', 'address', 'phone', 'website'
+                        'email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity'
                     ];
                     configKeys.forEach(k => {
                         if (data[k] !== undefined) state[k] = data[k];
@@ -594,6 +717,7 @@
                     });
 
                     window.renderQRBox();
+                    window.renderWatermark();
                     updateDisplay();
                 }
             } catch (error) {
@@ -645,6 +769,8 @@
                     address: state.address || '',
                     phone: state.phone || '',
                     website: state.website || '',
+                    watermarkMode: state.watermarkMode || 'grid',
+                    watermarkOpacity: Number(state.watermarkOpacity ?? 10),
                     expYear: isIndefinite ? 9999 : expYear,
                     isIndefinite: isIndefinite,
                     dateAdded: dateAdded
@@ -831,8 +957,11 @@
             if (record.address !== undefined && record.address !== '') state.address = record.address;
             if (record.phone !== undefined && record.phone !== '') state.phone = record.phone;
             if (record.website !== undefined) state.website = record.website;
+            if (record.watermarkMode !== undefined) state.watermarkMode = record.watermarkMode;
+            if (record.watermarkOpacity !== undefined) state.watermarkOpacity = record.watermarkOpacity;
 
             window.renderQRBox();
+            window.renderWatermark();
             updateDisplay();
             
             document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
@@ -863,6 +992,8 @@
         };
 
         // --- LÓGICA DE VERIFICACIÓN (FIREBASE) ---
+        window.verifiedCertificates = [];
+
         document.getElementById('verifyForm').addEventListener('submit', async e => {
             e.preventDefault();
             const idToSearch = document.getElementById('verifyIdInput').value.trim();
@@ -878,36 +1009,42 @@
                 if(!querySnapshot.empty) {
                     let results = [];
                     querySnapshot.forEach((doc) => results.push(doc.data()));
+                    window.verifiedCertificates = results;
 
                     let html = `
                         <div class="mb-4">
                             <h3 class="text-lg font-bold text-gray-900 leading-tight">${results[0].name}</h3>
                             <p class="text-xs font-semibold text-gray-500 mt-1">C.C. ${results[0].id}</p>
                         </div>
-                        <div class="space-y-3">
+                        <div class="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
                     `;
                     
                     const currentYear = new Date().getFullYear();
                     
-                    results.forEach(cert => {
+                    results.forEach((cert, index) => {
                         let isActive = cert.isIndefinite || currentYear <= cert.expYear;
                         let badge = isActive ? 
                             `<span class="bg-green-100 text-green-800 border border-green-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Activo</span>` : 
                             `<span class="bg-red-100 text-red-800 border border-red-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Vencido</span>`;
                         
                         html += `
-                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <p class="text-xs font-bold text-gray-800 mb-2 leading-tight">${cert.course}</p>
+                            <div class="bg-gray-50 p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                <p class="text-xs font-bold text-gray-800 leading-tight">${cert.course}</p>
                                 <div class="flex items-center justify-between">
                                     <span class="text-[10px] text-gray-500">Válido hasta: ${cert.isIndefinite ? 'Sin caducidad' : cert.expYear}</span>
                                     ${badge}
                                 </div>
+                                <button type="button" onclick="downloadVerifiedPDF(${index})" class="w-full mt-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition-colors shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    Descargar Certificado PDF
+                                </button>
                             </div>
                         `;
                     });
                     html += `</div>`;
                     container.innerHTML = html;
                 } else {
+                    window.verifiedCertificates = [];
                     container.innerHTML = `
                         <div class="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-red-400 mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -921,6 +1058,93 @@
                 container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Error de conexión con la base de datos.</p>`;
             }
         });
+
+        window.downloadVerifiedPDF = async function(index) {
+            const record = window.verifiedCertificates[index];
+            if (!record) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            loadText.textContent = "Preparando y descargando tu certificado en PDF...";
+            overlay.classList.remove('hidden');
+
+            const mainAppEl = document.getElementById('mainApp');
+            const wasMainAppHidden = mainAppEl.classList.contains('hidden');
+
+            try {
+                // Cargar primero la configuración predeterminada de firmas/contacto como respaldo
+                await window.loadSignatureConfig();
+
+                // Aplicar todos los datos específicos guardados en el certificado del estudiante
+                state.name = record.name ?? '';
+                state.id = record.id ?? '';
+                state.course = record.course ?? '';
+                if (record.hours !== undefined && record.hours !== '') state.hours = record.hours;
+                if (record.day !== undefined && record.day !== '') state.day = record.day;
+                if (record.month !== undefined && record.month !== '') state.month = record.month;
+                if (record.year !== undefined && record.year !== '') state.year = record.year;
+                if (record.validityType !== undefined && record.validityType !== '') state.validityType = record.validityType;
+                if (record.validityYears !== undefined && record.validityYears !== '') state.validityYears = record.validityYears;
+
+                state.qrImage = record.qrImage || '';
+                state.qrSize = record.qrSize !== undefined ? record.qrSize : 100;
+                state.qrX = record.qrX !== undefined ? record.qrX : 0;
+                state.qrY = record.qrY !== undefined ? record.qrY : 0;
+
+                if (record.sign1Name !== undefined && record.sign1Name !== '') state.sign1Name = record.sign1Name;
+                if (record.sign1Role !== undefined && record.sign1Role !== '') state.sign1Role = record.sign1Role;
+                if (record.sign1Size !== undefined) state.sign1Size = record.sign1Size;
+                if (record.sign1X !== undefined) state.sign1X = record.sign1X;
+                if (record.sign1Y !== undefined) state.sign1Y = record.sign1Y;
+                if (record.sign1Image) {
+                    state.sign1Image = record.sign1Image;
+                    document.getElementById('sign1ImageContainer').innerHTML = `<img src="${state.sign1Image}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+                }
+
+                if (record.sign2Name !== undefined && record.sign2Name !== '') state.sign2Name = record.sign2Name;
+                if (record.sign2Role !== undefined && record.sign2Role !== '') state.sign2Role = record.sign2Role;
+                if (record.sign2Size !== undefined) state.sign2Size = record.sign2Size;
+                if (record.sign2X !== undefined) state.sign2X = record.sign2X;
+                if (record.sign2Y !== undefined) state.sign2Y = record.sign2Y;
+                if (record.sign2Image) {
+                    state.sign2Image = record.sign2Image;
+                    document.getElementById('sign2ImageContainer').innerHTML = `<img src="${state.sign2Image}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
+                }
+
+                if (record.email !== undefined && record.email !== '') state.email = record.email;
+                if (record.address !== undefined && record.address !== '') state.address = record.address;
+                if (record.phone !== undefined && record.phone !== '') state.phone = record.phone;
+                if (record.website !== undefined) state.website = record.website;
+                if (record.watermarkMode !== undefined) state.watermarkMode = record.watermarkMode;
+                if (record.watermarkOpacity !== undefined) state.watermarkOpacity = record.watermarkOpacity;
+
+                window.renderQRBox();
+                window.renderWatermark();
+                updateDisplay();
+
+                // Habilitar temporalmente el lienzo detrás de la pantalla de verificación para renderizar con precisión
+                if (wasMainAppHidden) {
+                    mainAppEl.classList.remove('hidden');
+                    mainAppEl.classList.add('flex');
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 120));
+
+                const pdf = await createCertificatePDF();
+                const safeName = String(state.name || 'ESTUDIANTE').replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                const safeCourse = String(state.course || 'CURSO').replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                pdf.save(`CERTIFICADO_${safeName}_${safeCourse}.pdf`);
+            } catch (error) {
+                console.error("Error descargando certificado verificado:", error);
+                await window.showNotice("Hubo un error al generar la descarga del certificado.");
+            } finally {
+                if (wasMainAppHidden) {
+                    mainAppEl.classList.add('hidden');
+                    mainAppEl.classList.remove('flex');
+                }
+                overlay.classList.add('hidden');
+            }
+        };
 
         // --- LÓGICA DE LOGIN (INTERFAZ) ---
         document.getElementById('loginForm').addEventListener('submit', e => {
@@ -984,6 +1208,12 @@
                 const inp = document.getElementById(`inputQr${p}`);
                 if(inp) inp.value = state[`qr${p}`];
             });
+
+            const wmModeEl = document.getElementById('inputWatermarkMode');
+            if (wmModeEl) wmModeEl.value = state.watermarkMode || 'grid';
+            const wmOpEl = document.getElementById('inputWatermarkOpacity');
+            if (wmOpEl) wmOpEl.value = state.watermarkOpacity ?? 10;
+            window.renderWatermark();
         }
 
         // Event Listeners Básicos
@@ -1082,14 +1312,15 @@
             scaleWrapper.style.transform = 'none';
             window.renderQRBox();
 
-            const qrImgEl = document.getElementById('qrActiveImg');
-            if (qrImgEl && !qrImgEl.complete) {
-                await new Promise(resolve => {
-                    qrImgEl.onload = resolve;
-                    qrImgEl.onerror = resolve;
+            const allImages = docContainer.querySelectorAll('img');
+            await Promise.all(Array.from(allImages).map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
                 });
-            }
-            await new Promise(resolve => setTimeout(resolve, 60));
+            }));
+            await new Promise(resolve => setTimeout(resolve, 80));
 
             try {
                 const canvas = await window.html2canvas(docContainer, {
@@ -1341,6 +1572,7 @@
 
         // --- INICIALIZACIÓN ---
         window.addEventListener('DOMContentLoaded', () => { 
+            window.initWatermark();
             if(sessionStorage.getItem('funetec_auth') === 'true') {
                 window.showScreen('mainApp');
             } else {
