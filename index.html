@@ -6,7 +6,7 @@
     <title>FUNETEC - Portal de Certificaciones</title>
     <link rel="icon" href="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" type="image/png">
     
-    <!-- Librerías para Generación Masiva -->
+    <!-- Librerías para Generación de PDF y Excel Masivo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -32,7 +32,7 @@
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d32f2f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Custom scrollbar for sidebar */
+        /* Barra de desplazamiento personalizada */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -41,11 +41,11 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-900 overflow-hidden">
     
-    <!-- Pantalla de Carga de Proceso Masivo -->
+    <!-- Pantalla de Carga de Proceso -->
     <div id="loadingOverlay" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-900 bg-opacity-80 backdrop-blur-sm text-white no-print">
         <div class="loader mb-4"></div>
-        <h2 class="text-xl font-bold mb-2">Procesando y Guardando...</h2>
-        <p id="loadingText" class="text-sm text-gray-300">Conectando con la base de datos en la nube. No cierres esta ventana.</p>
+        <h2 class="text-xl font-bold mb-2">Procesando...</h2>
+        <p id="loadingText" class="text-sm text-gray-300 text-center px-4">Conectando con la base de datos en la nube. No cierres esta ventana.</p>
     </div>
 
     <!-- Modal de Mensajes y Confirmaciones -->
@@ -57,7 +57,7 @@
     </div>
 
     <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
-    <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print">
+    <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
             <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" class="h-32 mx-auto mb-6 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Institucional</h2>
@@ -77,7 +77,7 @@
     </div>
 
     <!-- 2. PANTALLA DE VERIFICACIÓN (PÚBLICA) -->
-    <div id="verificationScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print">
+    <div id="verificationScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
             <button onclick="showScreen('welcomeScreen')" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-red-600 mb-6 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -85,7 +85,7 @@
             </button>
             
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Verificación en Línea</h2>
-            <p class="text-xs text-gray-500 mb-6">Ingrese el número de cédula del estudiante para consultar la validez de su certificado.</p>
+            <p class="text-xs text-gray-500 mb-6">Ingrese el número de cédula del estudiante para consultar la validez de su certificado y descargarlo en PDF.</p>
             
             <form id="verifyForm" class="space-y-4">
                 <div class="relative">
@@ -95,15 +95,13 @@
                 <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar Cédula</button>
             </form>
 
-            <!-- Contenedor de Resultados -->
-            <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200">
-                <!-- Resultados Inyectados aquí -->
-            </div>
+            <!-- Contenedor de Resultados de Verificación -->
+            <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200"></div>
         </div>
     </div>
 
     <!-- 3. PANTALLA DE LOGIN (PRIVADA) -->
-    <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm no-print">
+    <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm no-print p-4">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center relative">
             <button onclick="showScreen('welcomeScreen')" class="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-800 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -188,12 +186,12 @@
                     </div>
                 </div>
 
-                <!-- Sección: Marca de Agua (Fondo) -->
+                <!-- Sección: Marca de Agua (Fondo 7x6) -->
                 <div class="mt-4 pt-4 border-t border-gray-200">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xs font-bold text-gray-800 uppercase">Marca de Agua (Fondo PDF)</h3>
+                        <h3 class="text-xs font-bold text-gray-800 uppercase">Marca de Agua (Fondo PDF 7x6)</h3>
                         <select id="inputWatermarkMode" name="watermarkMode" class="px-2 py-1 border border-gray-300 rounded text-[11px] font-semibold bg-white outline-none focus:ring-1 focus:ring-red-500">
-                            <option value="grid">Cuadrícula (Todo el PDF)</option>
+                            <option value="grid">Cuadrícula 7x6 (Todo el PDF)</option>
                             <option value="full">Imagen Completa</option>
                         </select>
                     </div>
@@ -239,10 +237,11 @@
                         </div>
                     </div>
                     <div id="dbRecordsList" class="space-y-3 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-                        <!-- La lista se mantendrá vacía y oculta hasta que se realice una búsqueda -->
+                        <!-- La lista se mantiene oculta hasta escribir en el buscador -->
                     </div>
                 </div>
 
+                <!-- Configuración de Firmas -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-sm font-bold text-gray-800 mb-4">Configuración de Firmas</h3>
                     <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -277,16 +276,16 @@
                     </div>
                 </div>
 
+                <!-- Datos de Contacto -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-sm font-bold text-gray-800 mb-4">Datos de Contacto</h3>
                     <div class="space-y-3">
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Correo Electrónico</label><input type="text" id="inputEmail" name="email" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Dirección</label><input type="text" id="inputAddress" name="address" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                         <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Teléfono</label><input type="text" id="inputPhone" name="phone" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
-                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">URL Web</label><input type="text" id="inputWebsite" name="website" placeholder="Ej: www.funetec.edu.co" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">URL Web</label><input type="text" id="inputWebsite" name="website" placeholder="Ej: cofunetec.vercel.app" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 outline-none text-xs font-medium" /></div>
                     </div>
                     
-                    <!-- Botón: Guardar Configuración -->
                     <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full mt-5 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-2.5 rounded-lg font-bold hover:bg-blue-100 transition-colors shadow-sm border border-blue-200 text-[10px] sm:text-xs">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                         GUARDAR CONFIGURACIÓN COMO PREDETERMINADA
@@ -323,7 +322,7 @@
             <div id="documentScaleWrapper" class="absolute top-1/2 left-1/2 origin-center transition-transform duration-200 ease-out" style="width: 1056px; height: 816px;">
                 <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-12 pb-10 px-16 font-sans-body">
                     
-                    <!-- Marca de Agua de Fondo -->
+                    <!-- Marca de Agua de Fondo (7x6) -->
                     <div id="watermarkContainer" class="absolute inset-0 z-[1] pointer-events-none overflow-hidden flex flex-col justify-between py-6 px-6 select-none"></div>
 
                     <!-- Código QR (Superior Derecha) -->
@@ -395,7 +394,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Inicializar tu Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDCUKkHkkwcH6VvMNX14KY8L_P3KAO1qoo",
             authDomain: "generadorverificaciondiplomas.firebaseapp.com",
@@ -410,10 +408,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Autenticación anónima para permitir lectura/escritura segura
         signInAnonymously(auth).catch((error) => console.error("Error Auth Firebase:", error));
 
-        // ESTADO GLOBAL
         const WATERMARK_URL_RAW = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
         const WATERMARK_URL_DIRECT = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
         const LOGO_URL_FALLBACK = "https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png";
@@ -422,15 +418,14 @@
             name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
             validityType: 'aplica', validityYears: '2', 
             qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
-            watermarkMode: 'grid', watermarkOpacity: 10, watermarkProcessedSrc: '', watermarkIsFallbackLogo: false,
+            watermarkMode: 'grid', watermarkOpacity: 10, watermarkProcessedSrc: '',
             sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
             sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
             email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679', website: 'cofunetec.vercel.app',
             bulkStudents: [],
-            dbRecords: [] // Registros de Firebase para la lista del panel
+            dbRecords: []
         };
 
-        // --- GESTIÓN DE PANTALLAS (Globalizadas para HTML) ---
         window.showScreen = function(screenId) {
             ['welcomeScreen', 'verificationScreen', 'loginScreen', 'mainApp'].forEach(id => {
                 const el = document.getElementById(id);
@@ -446,8 +441,8 @@
             });
             if(screenId === 'mainApp') {
                 setTimeout(adjustScale, 100);
-                window.loadDBRecords(); // Cargar BD al abrir el panel
-                window.loadSignatureConfig(); // Cargar la configuración guardada de firmas y contacto
+                window.loadDBRecords();
+                window.loadSignatureConfig();
             }
         };
 
@@ -478,7 +473,6 @@
         }
         window.addEventListener('resize', adjustScale);
 
-        // --- FUNCIONES DE CONFIGURACIÓN DE FIRMAS (FIREBASE) ---
         window.showNotice = function(message) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('customModal');
@@ -545,7 +539,7 @@
                     watermarkMode: state.watermarkMode || 'grid',
                     watermarkOpacity: Number(state.watermarkOpacity || 10)
                 });
-                await window.showNotice("¡Configuración predeterminada guardada! Las firmas y datos de contacto cargarán automáticamente la próxima vez que entres.");
+                await window.showNotice("¡Configuración predeterminada guardada! Las firmas, marca de agua y datos de contacto cargarán automáticamente la próxima vez que entres.");
             } catch(error) {
                 console.error("Error guardando configuración:", error);
                 if (error.code === 'permission-denied') {
@@ -673,8 +667,6 @@
                             for (let x = 0; x < w; x++) {
                                 const idx = (y * w + x) * 4;
                                 const r = data[idx], g = data[idx + 1], b = data[idx + 2];
-
-                                // Hacer transparente el fondo blanco para que no tape nada
                                 if (r > 245 && g > 245 && b > 245) {
                                     data[idx + 3] = 0;
                                 }
@@ -700,7 +692,6 @@
                 const docSnap = await getDoc(doc(db, "configuracion", "firmas"));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Solo aplicamos firmas y contacto predeterminados para no borrar el QR único del estudiante
                     const configKeys = [
                         'sign1Name', 'sign1Role', 'sign1Size', 'sign1X', 'sign1Y', 'sign1Image',
                         'sign2Name', 'sign2Role', 'sign2Size', 'sign2X', 'sign2Y', 'sign2Image',
@@ -725,7 +716,6 @@
             }
         };
 
-        // --- FUNCIONES DE BASE DE DATOS (FIREBASE) ---
         window.saveToDB = async function(studentName, studentId) {
             if(!studentName || !studentId) return;
             
@@ -865,7 +855,6 @@
             `}).join('');
         };
 
-        // --- FUNCIÓN PARA LIMPIAR FORMULARIO ---
         window.resetStudentForm = function() {
             state.name = '';
             state.id = '';
@@ -880,15 +869,14 @@
             updateDisplay();
         };
 
-        // --- FUNCIÓN PARA AGREGAR OTRO CURSO A UN USUARIO EXISTENTE ---
         window.fillUserDataForNewCourse = function(docId) {
             const record = state.dbRecords.find(r => r.docId === docId);
             if (!record) return;
 
             state.name = record.name || '';
             state.id = record.id || '';
-            state.course = ''; // Se deja el curso en blanco para escribir el nuevo
-            state.qrImage = ''; // Se limpia el QR por si el nuevo curso lleva un QR distinto
+            state.course = '';
+            state.qrImage = '';
             const qrInput = document.getElementById('uploadQR');
             if (qrInput) qrInput.value = '';
 
@@ -908,12 +896,10 @@
             }, 600);
         };
 
-        // --- FUNCIÓN DE CARGA COMPLETA Y VISTA PREVIA DEL CERTIFICADO ---
         window.previewCertificate = function(docId) {
             const record = state.dbRecords.find(r => r.docId === docId);
             if (!record) return;
 
-            // Cargar todos los datos del estudiante y del curso guardado
             state.name = record.name ?? '';
             state.id = record.id ?? '';
             state.course = record.course ?? '';
@@ -924,7 +910,6 @@
             if (record.validityType !== undefined && record.validityType !== '') state.validityType = record.validityType;
             if (record.validityYears !== undefined && record.validityYears !== '') state.validityYears = record.validityYears;
 
-            // Cargar el QR único guardado para este certificado
             state.qrImage = record.qrImage || '';
             state.qrSize = record.qrSize !== undefined ? record.qrSize : 100;
             state.qrX = record.qrX !== undefined ? record.qrX : 0;
@@ -932,7 +917,6 @@
             const qrInput = document.getElementById('uploadQR');
             if (qrInput) qrInput.value = '';
 
-            // Cargar firmas y datos de contacto si fueron guardados con el certificado
             if (record.sign1Name !== undefined && record.sign1Name !== '') state.sign1Name = record.sign1Name;
             if (record.sign1Role !== undefined && record.sign1Role !== '') state.sign1Role = record.sign1Role;
             if (record.sign1Size !== undefined) state.sign1Size = record.sign1Size;
@@ -991,7 +975,6 @@
             }
         };
 
-        // --- LÓGICA DE VERIFICACIÓN (FIREBASE) ---
         window.verifiedCertificates = [];
 
         document.getElementById('verifyForm').addEventListener('submit', async e => {
@@ -1072,10 +1055,8 @@
             const wasMainAppHidden = mainAppEl.classList.contains('hidden');
 
             try {
-                // Cargar primero la configuración predeterminada de firmas/contacto como respaldo
                 await window.loadSignatureConfig();
 
-                // Aplicar todos los datos específicos guardados en el certificado del estudiante
                 state.name = record.name ?? '';
                 state.id = record.id ?? '';
                 state.course = record.course ?? '';
@@ -1101,7 +1082,7 @@
                     document.getElementById('sign1ImageContainer').innerHTML = `<img src="${state.sign1Image}" alt="Firma" class="max-w-full h-full object-contain object-bottom mb-0 relative z-10" />`;
                 }
 
-                if (record.sign2Name !== undefined && record.sign2Name !== '') state.sign2Name = record.sign2Name;
+                if (record.sign2Name !== undefined && record.sign2Role !== '') state.sign2Name = record.sign2Name;
                 if (record.sign2Role !== undefined && record.sign2Role !== '') state.sign2Role = record.sign2Role;
                 if (record.sign2Size !== undefined) state.sign2Size = record.sign2Size;
                 if (record.sign2X !== undefined) state.sign2X = record.sign2X;
@@ -1122,13 +1103,12 @@
                 window.renderWatermark();
                 updateDisplay();
 
-                // Habilitar temporalmente el lienzo detrás de la pantalla de verificación para renderizar con precisión
                 if (wasMainAppHidden) {
                     mainAppEl.classList.remove('hidden');
                     mainAppEl.classList.add('flex');
                 }
 
-                await new Promise(resolve => setTimeout(resolve, 120));
+                await new Promise(resolve => setTimeout(resolve, 150));
 
                 const pdf = await createCertificatePDF();
                 const safeName = String(state.name || 'ESTUDIANTE').replace(/[^a-z0-9]/gi, '_').toUpperCase();
@@ -1146,7 +1126,6 @@
             }
         };
 
-        // --- LÓGICA DE LOGIN (INTERFAZ) ---
         document.getElementById('loginForm').addEventListener('submit', e => {
             e.preventDefault();
             if(document.getElementById('loginPass').value === 'A7f9K2mX8Q4zT1B') {
@@ -1159,7 +1138,6 @@
             }
         });
 
-        // --- LÓGICA DE ACTUALIZACIÓN VISUAL ---
         function updateDisplay() {
             const fields = ['Name', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone', 'Website'];
             fields.forEach(f => {
@@ -1216,14 +1194,12 @@
             window.renderWatermark();
         }
 
-        // Event Listeners Básicos
         document.querySelectorAll('input, textarea, select').forEach(inp => {
             if(inp.type !== 'file' && inp.id !== 'verifyIdInput' && inp.id !== 'loginPass' && inp.id !== 'searchDBInput') {
                 inp.addEventListener('input', e => { state[e.target.name] = e.target.value; updateDisplay(); });
             }
         });
 
-        // Subida y ajuste de Código QR
         document.getElementById('uploadQR').addEventListener('change', e => {
             if(e.target.files[0]) {
                 const r = new FileReader();
@@ -1264,7 +1240,6 @@
             updateDisplay();
         };
 
-        // Subida de Firmas con compresión automática
         [1, 2].forEach(n => {
             document.getElementById(`uploadSign${n}`).addEventListener('change', e => {
                 if(e.target.files[0]) {
@@ -1302,14 +1277,17 @@
             });
         });
 
-        // --- GENERACIÓN Y DESCARGA DE PDF CON QR INCRUSTADO ---
         async function createCertificatePDF() {
             const { jsPDF } = window.jspdf;
             const docContainer = document.getElementById('documentContainer');
             const scaleWrapper = document.getElementById('documentScaleWrapper');
             const originalTransform = scaleWrapper.style.transform;
+            const originalTop = scaleWrapper.style.top;
+            const originalLeft = scaleWrapper.style.left;
 
             scaleWrapper.style.transform = 'none';
+            scaleWrapper.style.top = '0px';
+            scaleWrapper.style.left = '0px';
             window.renderQRBox();
 
             const allImages = docContainer.querySelectorAll('img');
@@ -1328,7 +1306,9 @@
                     useCORS: true,
                     allowTaint: true,
                     logging: false,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    width: 1056,
+                    height: 816
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
@@ -1341,6 +1321,8 @@
                 pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
                 return pdf;
             } finally {
+                scaleWrapper.style.top = originalTop;
+                scaleWrapper.style.left = originalLeft;
                 scaleWrapper.style.transform = originalTransform;
             }
         }
@@ -1378,7 +1360,6 @@
             }
         };
 
-        // --- GUARDADO INDIVIDUAL (SOLO NUBE) ---
         window.saveIndividualOnly = async function() {
             if(!state.name || !state.id) {
                 await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de guardar.");
@@ -1398,7 +1379,6 @@
             await window.showNotice("¡Certificado guardado exitosamente en la nube!");
         };
 
-        // --- IMPRESIÓN Y GUARDADO INDIVIDUAL ---
         window.printAndSaveIndividual = async function() {
             if(!state.name || !state.id) {
                 await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
@@ -1418,7 +1398,6 @@
             window.print();
         };
 
-        // --- LÓGICA DE EXCEL MASIVO ---
         document.getElementById('uploadExcel').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1493,7 +1472,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // --- GENERACIÓN MASIVA (ZIP + NUBE) ---
         document.getElementById('btnBulkZip').addEventListener('click', async () => {
             if(state.bulkStudents.length === 0) return;
 
@@ -1542,7 +1520,6 @@
             }
         });
 
-        // --- GENERACIÓN MASIVA (SOLO NUBE) ---
         document.getElementById('btnBulkCloud').addEventListener('click', async () => {
             if(state.bulkStudents.length === 0) return;
 
@@ -1570,9 +1547,9 @@
             }
         });
 
-        // --- INICIALIZACIÓN ---
         window.addEventListener('DOMContentLoaded', () => { 
             window.initWatermark();
+            window.loadSignatureConfig();
             if(sessionStorage.getItem('funetec_auth') === 'true') {
                 window.showScreen('mainApp');
             } else {
