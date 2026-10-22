@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUNETEC - Portal de Certificaciones</title>
-    <link rel="icon" href="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" type="image/png">
+    <link rel="icon" href="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" type="image/png">
     
     <!-- Librerías para Generación de PDF y Excel Masivo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Estilos Nativos Completos (Garantiza diseño idéntico incluso si falla o se bloquea el CDN en cualquier PC) -->
+    <!-- Estilos Nativos Completos -->
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -36,269 +36,81 @@
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
         }
-        img, svg {
-            display: block;
-            max-width: 100%;
-        }
-        button, input, select, textarea {
-            font-family: inherit;
-            font-size: 100%;
-            line-height: 1.15;
-            margin: 0;
-        }
-        button {
-            cursor: pointer;
-            background-color: transparent;
-            background-image: none;
-        }
+        img, svg { display: block; max-width: 100%; }
+        button, input, select, textarea { font-family: inherit; font-size: 100%; line-height: 1.15; margin: 0; }
+        button { cursor: pointer; background-color: transparent; background-image: none; }
         .font-serif-title { font-family: 'Times New Roman', Times, serif !important; }
         .font-sans-body { font-family: Arial, Helvetica, sans-serif !important; }
         .hidden { display: none !important; }
 
-        /* Utilidades garantizadas independientes de red */
-        .fixed { position: fixed; }
-        .absolute { position: absolute; }
-        .relative { position: relative; }
+        .fixed { position: fixed; } .absolute { position: absolute; } .relative { position: relative; }
         .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-        .z-10 { z-index: 10; }
-        .z-20 { z-index: 20; }
-        .z-50 { z-index: 50; }
-        .z-\[1\] { z-index: 1; }
-        .z-\[100\] { z-index: 100; }
-        .z-\[110\] { z-index: 110; }
+        .z-10 { z-index: 10; } .z-20 { z-index: 20; } .z-50 { z-index: 50; } .z-\[1\] { z-index: 1; } .z-\[100\] { z-index: 100; } .z-\[110\] { z-index: 110; }
 
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .flex-wrap { flex-wrap: wrap; }
-        .flex-1 { flex: 1 1 0%; }
-        .shrink-0 { flex-shrink: 0; }
-        .items-center { align-items: center; }
-        .items-end { align-items: flex-end; }
-        .justify-center { justify-content: center; }
-        .justify-between { justify-content: space-between; }
+        .flex { display: flex; } .flex-col { flex-direction: column; } .flex-wrap { flex-wrap: wrap; }
+        .flex-1 { flex: 1 1 0%; } .shrink-0 { flex-shrink: 0; }
+        .items-center { align-items: center; } .items-end { align-items: flex-end; }
+        .justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
 
-        .grid { display: grid; }
-        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+        .grid { display: grid; } .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+        .gap-1 { gap: 0.25rem; } .gap-1\.5 { gap: 0.375rem; } .gap-2 { gap: 0.5rem; } .gap-3 { gap: 0.75rem; }
 
-        .gap-1 { gap: 0.25rem; }
-        .gap-1\.5 { gap: 0.375rem; }
-        .gap-2 { gap: 0.5rem; }
-        .gap-3 { gap: 0.75rem; }
+        .w-full { width: 100%; } .w-1\/3 { width: 33.333333%; } .w-2\/3 { width: 66.666667%; } .w-12 { width: 3rem; } .w-16 { width: 4rem; } .w-28 { width: 7rem; } .w-48 { width: 12rem; } .w-64 { width: 16rem; }
+        .h-full { height: 100%; } .h-screen { height: 100vh; } .h-12 { height: 3rem; } .h-16 { height: 4rem; } .h-28 { height: 7rem; } .h-32 { height: 8rem; }
+        .max-w-sm { max-width: 24rem; } .max-w-md { max-width: 28rem; } .max-w-5xl { max-width: 64rem; } .max-h-64 { max-height: 16rem; } .max-h-72 { max-height: 18rem; }
 
-        .w-full { width: 100%; }
-        .w-1\/3 { width: 33.333333%; }
-        .w-2\/3 { width: 66.666667%; }
-        .w-12 { width: 3rem; }
-        .w-16 { width: 4rem; }
-        .w-28 { width: 7rem; }
-        .w-48 { width: 12rem; }
-        .w-64 { width: 16rem; }
-        .h-full { height: 100%; }
-        .h-screen { height: 100vh; }
-        .h-12 { height: 3rem; }
-        .h-16 { height: 4rem; }
-        .h-28 { height: 7rem; }
-        .h-32 { height: 8rem; }
-        .h-40 { height: 10rem; }
-        .max-w-sm { max-width: 24rem; }
-        .max-w-md { max-width: 28rem; }
-        .max-w-5xl { max-width: 64rem; }
-        .max-h-64 { max-height: 16rem; }
-        .max-h-72 { max-height: 18rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; } .m-0 { margin: 0; } .mt-0 { margin-top: 0; } .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; } .mt-4 { margin-top: 1rem; } .mt-5 { margin-top: 1.25rem; } .mt-6 { margin-top: 1.5rem; }
+        .mb-0 { margin-bottom: 0; } .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 0.75rem; } .mb-4 { margin-bottom: 1rem; } .mb-6 { margin-bottom: 1.5rem; } .mb-8 { margin-bottom: 2rem; }
 
-        .mx-auto { margin-left: auto; margin-right: auto; }
-        .m-0 { margin: 0; }
-        .mt-0 { margin-top: 0; }
-        .mt-1 { margin-top: 0.25rem; }
-        .mt-2 { margin-top: 0.5rem; }
-        .mt-4 { margin-top: 1rem; }
-        .mt-5 { margin-top: 1.25rem; }
-        .mt-6 { margin-top: 1.5rem; }
-        .mb-0 { margin-bottom: 0; }
-        .mb-1 { margin-bottom: 0.25rem; }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-3 { margin-bottom: 0.75rem; }
-        .mb-4 { margin-bottom: 1rem; }
-        .mb-6 { margin-bottom: 1.5rem; }
-        .mb-8 { margin-bottom: 2rem; }
+        .p-1 { padding: 0.25rem; } .p-1\.5 { padding: 0.375rem; } .p-2 { padding: 0.5rem; } .p-2\.5 { padding: 0.625rem; } .p-3 { padding: 0.75rem; } .p-3\.5 { padding: 0.875rem; } .p-4 { padding: 1rem; } .p-6 { padding: 1.5rem; } .p-8 { padding: 2rem; } .p-10 { padding: 2.5rem; }
+        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; } .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; } .px-4 { padding-left: 1rem; padding-right: 1rem; } .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; } .px-12 { padding-left: 3rem; padding-right: 3rem; } .px-16 { padding-left: 4rem; padding-right: 4rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; } .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; } .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; } .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; } .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; } .py-4 { padding-top: 1rem; padding-bottom: 1rem; } .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .pt-2 { padding-top: 0.5rem; } .pt-4 { padding-top: 1rem; } .pt-6 { padding-top: 1.5rem; } .pt-12 { padding-top: 3rem; } .pb-2 { padding-bottom: 0.5rem; } .pb-5 { padding-bottom: 1.25rem; } .pb-8 { padding-bottom: 2rem; } .pb-10 { padding-bottom: 2.5rem; }
+        .pl-8 { padding-left: 2rem; } .pl-11 { padding-left: 2.75rem; } .pr-1 { padding-right: 0.25rem; } .pr-2 { padding-right: 0.5rem; }
 
-        .p-1 { padding: 0.25rem; }
-        .p-1\.5 { padding: 0.375rem; }
-        .p-2 { padding: 0.5rem; }
-        .p-2\.5 { padding: 0.625rem; }
-        .p-3 { padding: 0.75rem; }
-        .p-3\.5 { padding: 0.875rem; }
-        .p-4 { padding: 1rem; }
-        .p-6 { padding: 1.5rem; }
-        .p-8 { padding: 2rem; }
-        .p-10 { padding: 2.5rem; }
-        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-        .px-4 { padding-left: 1rem; padding-right: 1rem; }
-        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-        .px-12 { padding-left: 3rem; padding-right: 3rem; }
-        .px-16 { padding-left: 4rem; padding-right: 4rem; }
-        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-        .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-        .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
-        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-        .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-        .pt-2 { padding-top: 0.5rem; }
-        .pt-4 { padding-top: 1rem; }
-        .pt-6 { padding-top: 1.5rem; }
-        .pt-12 { padding-top: 3rem; }
-        .pb-2 { padding-bottom: 0.5rem; }
-        .pb-5 { padding-bottom: 1.25rem; }
-        .pb-8 { padding-bottom: 2rem; }
-        .pb-10 { padding-bottom: 2.5rem; }
-        .pl-8 { padding-left: 2rem; }
-        .pl-11 { padding-left: 2.75rem; }
-        .pr-1 { padding-right: 0.25rem; }
-        .pr-2 { padding-right: 0.5rem; }
+        .space-y-1 > * + * { margin-top: 0.25rem; } .space-y-2 > * + * { margin-top: 0.5rem; } .space-y-2\.5 > * + * { margin-top: 0.625rem; } .space-y-3 > * + * { margin-top: 0.75rem; } .space-y-4 > * + * { margin-top: 1rem; }
 
-        .space-y-1 > * + * { margin-top: 0.25rem; }
-        .space-y-2 > * + * { margin-top: 0.5rem; }
-        .space-y-2\.5 > * + * { margin-top: 0.625rem; }
-        .space-y-3 > * + * { margin-top: 0.75rem; }
-        .space-y-4 > * + * { margin-top: 1rem; }
+        .bg-white { background-color: #ffffff; } .bg-gray-50 { background-color: #f9fafb; } .bg-gray-100 { background-color: #f3f4f6; } .bg-gray-200 { background-color: #e5e7eb; } .bg-gray-300 { background-color: #d1d5db; } .bg-gray-800 { background-color: #1f2937; } .bg-gray-900 { background-color: #111827; }
+        .bg-red-50 { background-color: #fef2f2; } .bg-red-100 { background-color: #fee2e2; } .bg-red-600 { background-color: #dc2626; } .bg-red-700 { background-color: #b91c1c; }
+        .bg-green-100 { background-color: #dcfce7; } .bg-green-600 { background-color: #16a34a; } .bg-green-700 { background-color: #15803d; }
+        .bg-blue-50 { background-color: #eff6ff; } .bg-blue-100 { background-color: #dbeafe; }
 
-        .bg-white { background-color: #ffffff; }
-        .bg-gray-50 { background-color: #f9fafb; }
-        .bg-gray-100 { background-color: #f3f4f6; }
-        .bg-gray-200 { background-color: #e5e7eb; }
-        .bg-gray-300 { background-color: #d1d5db; }
-        .bg-gray-800 { background-color: #1f2937; }
-        .bg-gray-900 { background-color: #111827; }
-        .bg-red-50 { background-color: #fef2f2; }
-        .bg-red-100 { background-color: #fee2e2; }
-        .bg-red-600 { background-color: #dc2626; }
-        .bg-red-700 { background-color: #b91c1c; }
-        .bg-green-100 { background-color: #dcfce7; }
-        .bg-green-600 { background-color: #16a34a; }
-        .bg-green-700 { background-color: #15803d; }
-        .bg-blue-50 { background-color: #eff6ff; }
-        .bg-blue-100 { background-color: #dbeafe; }
+        .text-white { color: #ffffff; } .text-black { color: #000000; } .text-gray-300 { color: #d1d5db; } .text-gray-400 { color: #9ca3af; } .text-gray-500 { color: #6b7280; } .text-gray-600 { color: #4b5563; } .text-gray-700 { color: #374151; } .text-gray-800 { color: #1f2937; } .text-gray-900 { color: #111827; }
+        .text-red-500 { color: #ef4444; } .text-red-600 { color: #dc2626; } .text-red-700 { color: #b91c1c; } .text-red-800 { color: #991b1b; }
+        .text-green-700 { color: #15803d; } .text-green-800 { color: #166534; } .text-blue-600 { color: #2563eb; } .text-blue-700 { color: #1d4ed8; }
 
-        .text-white { color: #ffffff; }
-        .text-black { color: #000000; }
-        .text-gray-300 { color: #d1d5db; }
-        .text-gray-400 { color: #9ca3af; }
-        .text-gray-500 { color: #6b7280; }
-        .text-gray-600 { color: #4b5563; }
-        .text-gray-700 { color: #374151; }
-        .text-gray-800 { color: #1f2937; }
-        .text-gray-900 { color: #111827; }
-        .text-red-500 { color: #ef4444; }
-        .text-red-600 { color: #dc2626; }
-        .text-red-700 { color: #b91c1c; }
-        .text-red-800 { color: #991b1b; }
-        .text-green-700 { color: #15803d; }
-        .text-green-800 { color: #166534; }
-        .text-blue-600 { color: #2563eb; }
-        .text-blue-700 { color: #1d4ed8; }
+        .border { border-width: 1px; } .border-2 { border-width: 2px; } .border-t { border-top-width: 1px; } .border-r { border-right-width: 1px; } .border-dashed { border-style: dashed; }
+        .border-black { border-color: #000000; } .border-gray-100 { border-color: #f3f4f6; } .border-gray-200 { border-color: #e5e7eb; } .border-gray-300 { border-color: #d1d5db; } .border-red-100 { border-color: #fee2e2; } .border-red-200 { border-color: #fecaca; } .border-red-400 { border-color: #f87171; } .border-green-200 { border-color: #bbf7d0; } .border-blue-200 { border-color: #bfdbfe; }
 
-        .border { border-width: 1px; }
-        .border-2 { border-width: 2px; }
-        .border-t { border-top-width: 1px; }
-        .border-r { border-right-width: 1px; }
-        .border-dashed { border-style: dashed; }
-        .border-black { border-color: #000000; }
-        .border-gray-100 { border-color: #f3f4f6; }
-        .border-gray-200 { border-color: #e5e7eb; }
-        .border-gray-300 { border-color: #d1d5db; }
-        .border-red-100 { border-color: #fee2e2; }
-        .border-red-200 { border-color: #fecaca; }
-        .border-red-400 { border-color: #f87171; }
-        .border-green-200 { border-color: #bbf7d0; }
-        .border-blue-200 { border-color: #bfdbfe; }
+        .rounded { border-radius: 0.25rem; } .rounded-md { border-radius: 0.375rem; } .rounded-lg { border-radius: 0.5rem; } .rounded-xl { border-radius: 0.75rem; } .rounded-2xl { border-radius: 1rem; }
 
-        .rounded { border-radius: 0.25rem; }
-        .rounded-md { border-radius: 0.375rem; }
-        .rounded-lg { border-radius: 0.5rem; }
-        .rounded-xl { border-radius: 0.75rem; }
-        .rounded-2xl { border-radius: 1rem; }
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); } .shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); } .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); } .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); } .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
 
-        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-        .shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
-        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .text-center { text-align: center; } .text-xs { font-size: 0.75rem; line-height: 1rem; } .text-sm { font-size: 0.875rem; line-height: 1.25rem; } .text-lg { font-size: 1.125rem; line-height: 1.75rem; } .text-xl { font-size: 1.25rem; line-height: 1.75rem; } .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .font-normal { font-weight: 400; } .font-medium { font-weight: 500; } .font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
+        .uppercase { text-transform: uppercase; } .underline { text-decoration: underline; } .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .leading-tight { line-height: 1.25; } .tracking-wide { letter-spacing: 0.025em; } .whitespace-pre-line { white-space: pre-line; }
 
-        .text-center { text-align: center; }
-        .text-xs { font-size: 0.75rem; line-height: 1rem; }
-        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-        .font-normal { font-weight: 400; }
-        .font-medium { font-weight: 500; }
-        .font-semibold { font-weight: 600; }
-        .font-bold { font-weight: 700; }
-        .uppercase { text-transform: uppercase; }
-        .underline { text-decoration: underline; }
-        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .leading-tight { line-height: 1.25; }
-        .tracking-wide { letter-spacing: 0.025em; }
-        .whitespace-pre-line { white-space: pre-line; }
+        .object-contain { object-fit: contain; } .object-bottom { object-position: bottom; } .overflow-hidden { overflow: hidden; } .overflow-visible { overflow: visible; } .overflow-y-auto { overflow-y: auto; } .pointer-events-none { pointer-events: none; } .select-none { user-select: none; } .outline-none { outline: 2px solid transparent; outline-offset: 2px; } .resize-none { resize: none; }
 
-        .object-contain { object-fit: contain; }
-        .object-bottom { object-position: bottom; }
-        .overflow-hidden { overflow: hidden; }
-        .overflow-visible { overflow: visible; }
-        .overflow-y-auto { overflow-y: auto; }
-        .pointer-events-none { pointer-events: none; }
-        .select-none { user-select: none; }
-        .outline-none { outline: 2px solid transparent; outline-offset: 2px; }
-        .resize-none { resize: none; }
-
-        /* Tamaños exactos de texto del certificado y panel */
-        .text-\[8px\] { font-size: 8px; }
-        .text-\[9px\] { font-size: 9px; }
-        .text-\[10px\] { font-size: 10px; }
-        .text-\[11px\] { font-size: 11px; }
-        .text-\[12px\] { font-size: 12px; }
-        .text-\[13px\] { font-size: 13px; }
-        .text-\[15px\] { font-size: 15px; }
-        .text-\[2\.1rem\] { font-size: 2.1rem; }
-        .text-\[2\.2rem\] { font-size: 2.2rem; }
-        .text-\[2\.4rem\] { font-size: 2.4rem; }
-        .min-h-\[2\.5rem\] { min-height: 2.5rem; }
-        .min-h-\[3rem\] { min-height: 3rem; }
+        /* Tamaños exactos de texto del certificado */
+        .text-\[8px\] { font-size: 8px; } .text-\[9px\] { font-size: 9px; } .text-\[10px\] { font-size: 10px; } .text-\[11px\] { font-size: 11px; } .text-\[12px\] { font-size: 12px; } .text-\[13px\] { font-size: 13px; } .text-\[15px\] { font-size: 15px; } .text-\[2\.1rem\] { font-size: 2.1rem; } .text-\[2\.2rem\] { font-size: 2.2rem; } .text-\[2\.4rem\] { font-size: 2.4rem; }
+        .min-h-\[2\.5rem\] { min-height: 2.5rem; } .min-h-\[3rem\] { min-height: 3rem; }
 
         /* Posicionamiento exacto */
-        .top-3\.5 { top: 0.875rem; }
-        .top-4 { top: 1rem; }
-        .top-10 { top: 2.5rem; }
-        .top-1\/2 { top: 50%; }
-        .left-2\.5 { left: 0.625rem; }
-        .left-4 { left: 1rem; }
-        .left-1\/2 { left: 50%; }
-        .right-4 { right: 1rem; }
-        .right-16 { right: 4rem; }
+        .top-3\.5 { top: 0.875rem; } .top-4 { top: 1rem; } .top-10 { top: 2.5rem; } .top-1\/2 { top: 50%; }
+        .left-2\.5 { left: 0.625rem; } .left-4 { left: 1rem; } .left-1\/2 { left: 50%; }
+        .right-4 { right: 1rem; } .right-16 { right: 4rem; }
         .origin-center { transform-origin: center; }
 
-        /* Controles de formulario estilizados */
         input[type="text"], input[type="password"], input[type="number"], textarea, select {
-            background-color: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            color: #111827;
+            background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 0.375rem; color: #111827;
         }
         input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
-            border-color: #dc2626;
-            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
-            outline: none;
+            border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2); outline: none;
         }
-        input[type="range"] {
-            accent-color: #dc2626;
-            cursor: pointer;
-        }
+        input[type="range"] { accent-color: #dc2626; cursor: pointer; }
 
-        /* Responsividad del contenedor principal */
         @media (min-width: 768px) {
             .md\:flex-row { flex-direction: row !important; }
             .md\:w-\[26rem\] { width: 26rem !important; }
@@ -315,11 +127,9 @@
             svg circle, svg path, #qrImageContainer, #qrImageContainer img, #watermarkContainer, #watermarkContainer img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
         
-        /* Spinner de carga */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d32f2f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Barra de desplazamiento personalizada */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -346,7 +156,8 @@
     <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
     <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
-            <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" style="height: 128px; width: auto;" class="h-32 mx-auto mb-6 object-contain" />
+            <!-- Nuevo Logo Principal -->
+            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 128px; width: auto;" class="mx-auto mb-6 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Institucional</h2>
             <p class="text-sm text-gray-500 mb-8">Seleccione el módulo al que desea acceder.</p>
             
@@ -382,7 +193,6 @@
                 <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar Cédula</button>
             </form>
 
-            <!-- Contenedor de Resultados de Verificación -->
             <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200"></div>
         </div>
     </div>
@@ -394,7 +204,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
             
-            <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" style="height: 112px; width: auto;" class="h-28 mx-auto mb-6 mt-2 object-contain" />
+            <!-- Nuevo Logo Principal -->
+            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 112px; width: auto;" class="mx-auto mb-6 mt-2 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Acceso Restringido</h2>
             <p class="text-xs text-gray-500 mb-6">Área exclusiva para personal administrativo.</p>
             
@@ -644,7 +455,8 @@
                     <div class="text-center w-full relative z-10">
                         <div class="flex flex-col items-center">
                             <div class="mb-4 mt-2">
-                                <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" style="height: 160px; width: auto;" class="h-40 mx-auto object-contain" crossorigin="anonymous" />
+                                <!-- Nuevo Logo principal con height en 180px para verse más grande -->
+                                <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 180px; width: auto;" class="mx-auto object-contain" crossorigin="anonymous" />
                             </div>
                             <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-0 mt-0">Institución de Educación</h1>
                             <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-3 mt-0">para el Trabajo y Desarrollo Humano</h1>
@@ -704,6 +516,17 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Función para descongelar peticiones que se queden trabadas
+        const timeoutPromise = (ms, promise) => {
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => reject(new Error("Timeout: La conexión tardó demasiado, verifica tu red.")), ms);
+                promise.then(
+                    (res) => { clearTimeout(timeoutId); resolve(res); },
+                    (err) => { clearTimeout(timeoutId); reject(err); }
+                );
+            });
+        };
+
         const firebaseConfig = {
             apiKey: "AIzaSyDCUKkHkkwcH6VvMNX14KY8L_P3KAO1qoo",
             authDomain: "generadorverificaciondiplomas.firebaseapp.com",
@@ -722,7 +545,7 @@
 
         const WATERMARK_URL_RAW = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
         const WATERMARK_URL_DIRECT = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
-        const LOGO_URL_FALLBACK = "https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png";
+        const LOGO_URL_FALLBACK = "https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png";
 
         const state = { 
             name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
@@ -827,38 +650,20 @@
             btn.disabled = true;
 
             try {
-                await setDoc(doc(db, "configuracion", "firmas"), {
-                    sign1Name: state.sign1Name,
-                    sign1Role: state.sign1Role,
-                    sign1Size: state.sign1Size,
-                    sign1X: state.sign1X,
-                    sign1Y: state.sign1Y,
-                    sign1Image: state.sign1Image || '',
-                    
-                    sign2Name: state.sign2Name,
-                    sign2Role: state.sign2Role,
-                    sign2Size: state.sign2Size,
-                    sign2X: state.sign2X,
-                    sign2Y: state.sign2Y,
-                    sign2Image: state.sign2Image || '',
-                    
-                    email: state.email,
-                    address: state.address,
-                    phone: state.phone,
-                    website: state.website || '',
-                    watermarkMode: state.watermarkMode || 'grid',
-                    watermarkOpacity: Number(state.watermarkOpacity || 10)
-                });
-                await window.showNotice("¡Configuración predeterminada guardada! Las firmas, marca de agua y datos de contacto cargarán automáticamente la próxima vez que entres.");
+                const payload = {
+                    sign1Name: state.sign1Name, sign1Role: state.sign1Role, sign1Size: state.sign1Size, sign1X: state.sign1X, sign1Y: state.sign1Y, sign1Image: state.sign1Image || '',
+                    sign2Name: state.sign2Name, sign2Role: state.sign2Role, sign2Size: state.sign2Size, sign2X: state.sign2X, sign2Y: state.sign2Y, sign2Image: state.sign2Image || '',
+                    email: state.email, address: state.address, phone: state.phone, website: state.website || '',
+                    watermarkMode: state.watermarkMode || 'grid', watermarkOpacity: Number(state.watermarkOpacity || 5),
+                    qrImage: state.qrImage || '', qrSize: Number(state.qrSize || 100), qrX: Number(state.qrX || 0), qrY: Number(state.qrY || 0)
+                };
+
+                // Uso de protección timeout para evitar descongelamiento
+                await timeoutPromise(8000, setDoc(doc(db, "configuracion", "firmas"), payload));
+                await window.showNotice("¡Configuración predeterminada guardada! Las firmas, el QR predeterminado, la marca de agua y datos de contacto cargarán automáticamente la próxima vez que entres o limpies datos.");
             } catch(error) {
                 console.error("Error guardando configuración:", error);
-                if (error.code === 'permission-denied') {
-                    await window.showNotice("⚠️ Error de Permisos en Firebase:\nTu base de datos está bloqueando el guardado. Asegúrate de permitir escritura en la colección 'configuracion'.");
-                } else if (error.message && error.message.includes('exceed')) {
-                    await window.showNotice("⚠️ Error de Tamaño:\nLas imágenes siguen siendo demasiado pesadas. Intenta con una imagen más sencilla.");
-                } else {
-                    await window.showNotice("Error al guardar en la nube: " + error.message);
-                }
+                await window.showNotice("Error al guardar en la nube: " + error.message);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -914,7 +719,7 @@
             if (!container) return;
 
             const srcToUse = state.watermarkProcessedSrc || WATERMARK_URL_RAW;
-            const rawOpacity = Number(state.watermarkOpacity ?? 10);
+            const rawOpacity = Number(state.watermarkOpacity ?? 5);
             const opacityFraction = Math.max(0.02, Math.min(1, rawOpacity / 100));
             const opacityLabel = document.getElementById('watermarkOpacityValue');
             if (opacityLabel) opacityLabel.textContent = `${rawOpacity}%`;
@@ -1005,7 +810,8 @@
                     const configKeys = [
                         'sign1Name', 'sign1Role', 'sign1Size', 'sign1X', 'sign1Y', 'sign1Image',
                         'sign2Name', 'sign2Role', 'sign2Size', 'sign2X', 'sign2Y', 'sign2Image',
-                        'email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity'
+                        'email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity',
+                        'qrImage', 'qrSize', 'qrX', 'qrY'
                     ];
                     configKeys.forEach(k => {
                         if (data[k] !== undefined) state[k] = data[k];
@@ -1039,7 +845,7 @@
                 const existingRecord = state.dbRecords.find(r => r.docId === docId);
                 const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
 
-                await setDoc(doc(db, "certificados", docId), {
+                await timeoutPromise(8000, setDoc(doc(db, "certificados", docId), {
                     id: String(studentId).trim(),
                     name: String(studentName).trim().toUpperCase(),
                     course: String(state.course || '').trim().toUpperCase(),
@@ -1070,11 +876,11 @@
                     phone: state.phone || '',
                     website: state.website || '',
                     watermarkMode: state.watermarkMode || 'grid',
-                    watermarkOpacity: Number(state.watermarkOpacity ?? 10),
+                    watermarkOpacity: Number(state.watermarkOpacity ?? 5),
                     expYear: isIndefinite ? 9999 : expYear,
                     isIndefinite: isIndefinite,
                     dateAdded: dateAdded
-                });
+                }));
             } catch (error) {
                 console.error("Error al guardar en Firebase:", error);
                 throw error;
@@ -1165,17 +971,14 @@
             `}).join('');
         };
 
-        window.resetStudentForm = function() {
+        window.resetStudentForm = async function() {
             state.name = '';
             state.id = '';
             state.course = '';
-            state.qrImage = '';
-            state.qrSize = 100;
-            state.qrX = 0;
-            state.qrY = 0;
+            // Restaura la configuración guardada por si el usuario guardó un QR por defecto
+            await window.loadSignatureConfig();
             const qrInput = document.getElementById('uploadQR');
             if (qrInput) qrInput.value = '';
-            window.renderQRBox();
             updateDisplay();
         };
 
@@ -1500,7 +1303,7 @@
             const wmModeEl = document.getElementById('inputWatermarkMode');
             if (wmModeEl) wmModeEl.value = state.watermarkMode || 'grid';
             const wmOpEl = document.getElementById('inputWatermarkOpacity');
-            if (wmOpEl) wmOpEl.value = state.watermarkOpacity ?? 10;
+            if (wmOpEl) wmOpEl.value = state.watermarkOpacity ?? 5;
             window.renderWatermark();
         }
 
@@ -1684,9 +1487,26 @@
                 if(!overwrite) return;
             }
 
-            await window.saveToDB(state.name, state.id);
-            await window.loadDBRecords();
-            await window.showNotice("¡Certificado guardado exitosamente en la nube!");
+            try {
+                const btn = document.querySelector('button[onclick="saveIndividualOnly()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Guardando...';
+                btn.disabled = true;
+                
+                await window.saveToDB(state.name, state.id);
+                await window.loadDBRecords();
+                await window.showNotice("¡Certificado guardado exitosamente en la nube!");
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } catch (e) {
+                await window.showNotice("Error guardando el registro.");
+                const btn = document.querySelector('button[onclick="saveIndividualOnly()"]');
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 10.18a5.22 5.22 0 0 0-7.16-2.52 7 7 0 0 0-11 4.54A4.5 4.5 0 0 0 6 21h12.5a4.5 4.5 0 0 0 1.92-8.82z"></path><polyline points="12 12 12 18"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>
+                    <span>GUARDAR EN LA NUBE</span>`;
+                btn.disabled = false;
+            }
         };
 
         window.printAndSaveIndividual = async function() {
