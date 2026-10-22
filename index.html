@@ -4,800 +4,1871 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUNETEC - Portal de Certificaciones</title>
-    <link rel="icon" href="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" type="image/png">
+    <link rel="icon" href="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" type="image/png">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Librerías Externas -->
+    <!-- Librerías para Generación de PDF y Excel Masivo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- Respaldo de Tailwind CSS estático + CDN dinámico -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Fuentes Institucionales -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <!-- Estilos Nativos Completos (Garantiza diseño idéntico incluso si falla o se bloquea el CDN en cualquier PC) -->
     <style>
-        /* Estilos Integrados de Alta Prioridad */
-        *, *::before, *::after { box-sizing: border-box; }
-        body { margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; background-color: #f3f4f6; color: #1f2937; }
-        .hidden { display: none !important; }
-        .font-old-english { font-family: 'UnifrakturMaguntia', cursive; }
-        .font-serif-title { font-family: 'Playfair Display', serif; }
-        .font-sans-body { font-family: 'Montserrat', sans-serif; }
-
-        .loader {
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-left-color: #ef4444;
-            border-radius: 50%;
-            width: 44px; height: 44px;
-            animation: spin 1s linear infinite;
+        *, *::before, *::after {
+            box-sizing: border-box;
+            border-width: 0;
+            border-style: solid;
+            border-color: #e5e7eb;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Lienzo Fijo 1056x816 (Carta Horizontal) */
-        #certificateElement {
-            width: 1056px; height: 816px;
-            min-width: 1056px; min-height: 816px;
-            background-color: #ffffff;
-            position: relative;
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
             overflow: hidden;
-            display: flex; flex-direction: column; justify-content: space-between;
-            padding: 36px 56px 28px 56px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            -webkit-font-smoothing: antialiased;
+        }
+        img, svg {
+            display: block;
+            max-width: 100%;
+        }
+        button, input, select, textarea {
+            font-family: inherit;
+            font-size: 100%;
+            line-height: 1.15;
+            margin: 0;
+        }
+        button {
+            cursor: pointer;
+            background-color: transparent;
+            background-image: none;
+        }
+        .font-serif-title { font-family: 'Times New Roman', Times, serif !important; }
+        .font-sans-body { font-family: Arial, Helvetica, sans-serif !important; }
+        .hidden { display: none !important; }
+
+        /* Utilidades garantizadas independientes de red */
+        .fixed { position: fixed; }
+        .absolute { position: absolute; }
+        .relative { position: relative; }
+        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+        .z-10 { z-index: 10; }
+        .z-20 { z-index: 20; }
+        .z-50 { z-index: 50; }
+        .z-\[1\] { z-index: 1; }
+        .z-\[100\] { z-index: 100; }
+        .z-\[110\] { z-index: 110; }
+
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .flex-1 { flex: 1 1 0%; }
+        .shrink-0 { flex-shrink: 0; }
+        .items-center { align-items: center; }
+        .items-end { align-items: flex-end; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+        .gap-1 { gap: 0.25rem; }
+        .gap-1\.5 { gap: 0.375rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+
+        .w-full { width: 100%; }
+        .w-1\/3 { width: 33.333333%; }
+        .w-2\/3 { width: 66.666667%; }
+        .w-12 { width: 3rem; }
+        .w-16 { width: 4rem; }
+        .w-28 { width: 7rem; }
+        .w-48 { width: 12rem; }
+        .w-64 { width: 16rem; }
+        .h-full { height: 100%; }
+        .h-screen { height: 100vh; }
+        .h-12 { height: 3rem; }
+        .h-16 { height: 4rem; }
+        .h-28 { height: 7rem; }
+        .h-32 { height: 8rem; }
+        .h-40 { height: 10rem; }
+        .max-w-sm { max-width: 24rem; }
+        .max-w-md { max-width: 28rem; }
+        .max-w-5xl { max-width: 64rem; }
+        .max-h-64 { max-height: 16rem; }
+        .max-h-72 { max-height: 18rem; }
+
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .m-0 { margin: 0; }
+        .mt-0 { margin-top: 0; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-5 { margin-top: 1.25rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mb-0 { margin-bottom: 0; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+
+        .p-1 { padding: 0.25rem; }
+        .p-1\.5 { padding: 0.375rem; }
+        .p-2 { padding: 0.5rem; }
+        .p-2\.5 { padding: 0.625rem; }
+        .p-3 { padding: 0.75rem; }
+        .p-3\.5 { padding: 0.875rem; }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .p-10 { padding: 2.5rem; }
+        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .px-12 { padding-left: 3rem; padding-right: 3rem; }
+        .px-16 { padding-left: 4rem; padding-right: 4rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .pt-2 { padding-top: 0.5rem; }
+        .pt-4 { padding-top: 1rem; }
+        .pt-6 { padding-top: 1.5rem; }
+        .pt-12 { padding-top: 3rem; }
+        .pb-2 { padding-bottom: 0.5rem; }
+        .pb-5 { padding-bottom: 1.25rem; }
+        .pb-8 { padding-bottom: 2rem; }
+        .pb-10 { padding-bottom: 2.5rem; }
+        .pl-8 { padding-left: 2rem; }
+        .pl-11 { padding-left: 2.75rem; }
+        .pr-1 { padding-right: 0.25rem; }
+        .pr-2 { padding-right: 0.5rem; }
+
+        .space-y-1 > * + * { margin-top: 0.25rem; }
+        .space-y-2 > * + * { margin-top: 0.5rem; }
+        .space-y-2\.5 > * + * { margin-top: 0.625rem; }
+        .space-y-3 > * + * { margin-top: 0.75rem; }
+        .space-y-4 > * + * { margin-top: 1rem; }
+
+        .bg-white { background-color: #ffffff; }
+        .bg-gray-50 { background-color: #f9fafb; }
+        .bg-gray-100 { background-color: #f3f4f6; }
+        .bg-gray-200 { background-color: #e5e7eb; }
+        .bg-gray-300 { background-color: #d1d5db; }
+        .bg-gray-800 { background-color: #1f2937; }
+        .bg-gray-900 { background-color: #111827; }
+        .bg-red-50 { background-color: #fef2f2; }
+        .bg-red-100 { background-color: #fee2e2; }
+        .bg-red-600 { background-color: #dc2626; }
+        .bg-red-700 { background-color: #b91c1c; }
+        .bg-green-100 { background-color: #dcfce7; }
+        .bg-green-600 { background-color: #16a34a; }
+        .bg-green-700 { background-color: #15803d; }
+        .bg-blue-50 { background-color: #eff6ff; }
+        .bg-blue-100 { background-color: #dbeafe; }
+
+        .text-white { color: #ffffff; }
+        .text-black { color: #000000; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-gray-500 { color: #6b7280; }
+        .text-gray-600 { color: #4b5563; }
+        .text-gray-700 { color: #374151; }
+        .text-gray-800 { color: #1f2937; }
+        .text-gray-900 { color: #111827; }
+        .text-red-500 { color: #ef4444; }
+        .text-red-600 { color: #dc2626; }
+        .text-red-700 { color: #b91c1c; }
+        .text-red-800 { color: #991b1b; }
+        .text-green-700 { color: #15803d; }
+        .text-green-800 { color: #166534; }
+        .text-blue-600 { color: #2563eb; }
+        .text-blue-700 { color: #1d4ed8; }
+
+        .border { border-width: 1px; }
+        .border-2 { border-width: 2px; }
+        .border-t { border-top-width: 1px; }
+        .border-r { border-right-width: 1px; }
+        .border-dashed { border-style: dashed; }
+        .border-black { border-color: #000000; }
+        .border-gray-100 { border-color: #f3f4f6; }
+        .border-gray-200 { border-color: #e5e7eb; }
+        .border-gray-300 { border-color: #d1d5db; }
+        .border-red-100 { border-color: #fee2e2; }
+        .border-red-200 { border-color: #fecaca; }
+        .border-red-400 { border-color: #f87171; }
+        .border-green-200 { border-color: #bbf7d0; }
+        .border-blue-200 { border-color: #bfdbfe; }
+
+        .rounded { border-radius: 0.25rem; }
+        .rounded-md { border-radius: 0.375rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+
+        .text-center { text-align: center; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .font-normal { font-weight: 400; }
+        .font-medium { font-weight: 500; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .uppercase { text-transform: uppercase; }
+        .underline { text-decoration: underline; }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .leading-tight { line-height: 1.25; }
+        .tracking-wide { letter-spacing: 0.025em; }
+        .whitespace-pre-line { white-space: pre-line; }
+
+        .object-contain { object-fit: contain; }
+        .object-bottom { object-position: bottom; }
+        .overflow-hidden { overflow: hidden; }
+        .overflow-visible { overflow: visible; }
+        .overflow-y-auto { overflow-y: auto; }
+        .pointer-events-none { pointer-events: none; }
+        .select-none { user-select: none; }
+        .outline-none { outline: 2px solid transparent; outline-offset: 2px; }
+        .resize-none { resize: none; }
+
+        /* Tamaños exactos de texto del certificado y panel */
+        .text-\[8px\] { font-size: 8px; }
+        .text-\[9px\] { font-size: 9px; }
+        .text-\[10px\] { font-size: 10px; }
+        .text-\[11px\] { font-size: 11px; }
+        .text-\[12px\] { font-size: 12px; }
+        .text-\[13px\] { font-size: 13px; }
+        .text-\[15px\] { font-size: 15px; }
+        .text-\[2\.1rem\] { font-size: 2.1rem; }
+        .text-\[2\.2rem\] { font-size: 2.2rem; }
+        .text-\[2\.4rem\] { font-size: 2.4rem; }
+        .min-h-\[2\.5rem\] { min-height: 2.5rem; }
+        .min-h-\[3rem\] { min-height: 3rem; }
+
+        /* Posicionamiento exacto */
+        .top-3\.5 { top: 0.875rem; }
+        .top-4 { top: 1rem; }
+        .top-10 { top: 2.5rem; }
+        .top-1\/2 { top: 50%; }
+        .left-2\.5 { left: 0.625rem; }
+        .left-4 { left: 1rem; }
+        .left-1\/2 { left: 50%; }
+        .right-4 { right: 1rem; }
+        .right-16 { right: 4rem; }
+        .origin-center { transform-origin: center; }
+
+        /* Controles de formulario estilizados */
+        input[type="text"], input[type="password"], input[type="number"], textarea, select {
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            color: #111827;
+        }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+            outline: none;
+        }
+        input[type="range"] {
+            accent-color: #dc2626;
+            cursor: pointer;
         }
 
-        /* Reglas estandarizadas de Impresión */
+        /* Responsividad del contenedor principal */
+        @media (min-width: 768px) {
+            .md\:flex-row { flex-direction: row !important; }
+            .md\:w-\[26rem\] { width: 26rem !important; }
+        }
+
+        /* Impresión */
         @media print {
             @page { size: letter landscape; margin: 0; }
-            body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }
+            body { margin: 0; padding: 0; background: white; }
             .no-print { display: none !important; }
-            #mainWorkspace { height: auto !important; overflow: visible !important; background: white !important; }
-            #previewWrapper { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
-            #certificateElement { width: 100vw !important; height: 100vh !important; box-shadow: none !important; transform: none !important; }
+            #previewWrapper { display: block !important; padding: 0 !important; background: white !important; overflow: visible !important; position: static !important; }
+            #documentScaleWrapper { position: static !important; transform: none !important; left: auto !important; top: auto !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; }
+            .print-container { width: 100vw !important; height: 100vh !important; max-width: none !important; box-shadow: none !important; padding: 2rem !important; margin: 0 !important; }
+            svg circle, svg path, #qrImageContainer, #qrImageContainer img, #watermarkContainer, #watermarkContainer img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
+        
+        /* Spinner de carga */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d32f2f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Barra de desplazamiento personalizada */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
+<body class="bg-gray-100 font-sans text-gray-900 overflow-hidden">
+    
+    <!-- Pantalla de Carga de Proceso -->
+    <div id="loadingOverlay" style="background-color: rgba(17, 24, 39, 0.85);" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center text-white no-print">
+        <div class="loader mb-4"></div>
+        <h2 class="text-xl font-bold mb-2">Procesando...</h2>
+        <p id="loadingText" class="text-sm text-gray-300 text-center px-4">Conectando con la base de datos en la nube. No cierres esta ventana.</p>
+    </div>
 
-    <!-- MODAL PRINCIPAL DE AVISOS Y ALERTAS (NO BORRAR: PREVIENE EL CONGELAMIENTO) -->
-    <div id="customModal" style="display: none; background-color: rgba(17, 24, 39, 0.85);" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 no-print backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100 text-center relative transform transition-all">
-            <div id="customModalIcon" class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            </div>
-            <h3 id="customModalTitle" class="text-lg font-bold text-gray-900 mb-2">Aviso</h3>
-            <p id="customModalMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></p>
-            <div id="customModalButtons" class="flex justify-center gap-3">
-                <button id="customModalCancel" class="hidden px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-100 transition-colors">Cancelar</button>
-                <button id="customModalConfirm" class="px-6 py-2.5 rounded-lg bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition-colors shadow">Aceptar</button>
-            </div>
+    <!-- Modal de Mensajes y Confirmaciones -->
+    <div id="customModal" style="background-color: rgba(17, 24, 39, 0.65);" class="hidden fixed inset-0 z-[110] flex items-center justify-center no-print p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border border-gray-100 text-center">
+            <p id="customModalMessage" class="text-sm text-gray-800 font-medium whitespace-pre-line mb-6"></p>
+            <div id="customModalButtons" class="flex justify-center gap-3"></div>
         </div>
     </div>
 
-    <!-- PANTALLA DE CARGA GLOBAL -->
-    <div id="loadingOverlay" style="display: none; background-color: rgba(17, 24, 39, 0.85);" class="fixed inset-0 z-[9900] flex flex-col items-center justify-center text-white no-print p-4 text-center backdrop-blur-sm">
-        <div class="loader mb-4"></div>
-        <h2 id="loadingTitle" class="text-xl font-bold mb-2">Procesando...</h2>
-        <p id="loadingText" class="text-sm text-gray-300 max-w-md">Por favor espera un momento.</p>
-    </div>
-
-    <!-- 1. PANTALLA DE BIENVENIDA -->
+    <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
     <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
-            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" class="h-32 mx-auto mb-6 object-contain" />
+            <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" style="height: 128px; width: auto;" class="h-32 mx-auto mb-6 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Institucional</h2>
             <p class="text-sm text-gray-500 mb-8">Seleccione el módulo al que desea acceder.</p>
+            
             <div class="space-y-4">
-                <button onclick="showScreen('verifyScreen')" class="w-full flex items-center justify-center gap-3 bg-red-600 text-white py-3.5 px-6 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    Verificar Certificado
+                <button onclick="showScreen('verificationScreen')" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-red-600 hover:bg-red-50 text-gray-800 font-bold py-4 px-4 rounded-xl transition-all shadow-sm group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 group-hover:text-red-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span>Verificar Certificado</span>
                 </button>
-                <button onclick="showScreen('loginScreen')" class="w-full flex items-center justify-center gap-3 bg-gray-900 text-white py-3.5 px-6 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg">
+                <button onclick="showScreen('loginScreen')" class="w-full flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    Acceso Administrativo
+                    <span>Acceso Administrativo</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 2. PANTALLA DE VERIFICACIÓN (DESCARGA DE PDF) -->
-    <div id="verifyScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4 overflow-y-auto">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 relative my-8">
-            <button onclick="showScreen('welcomeScreen')" class="absolute top-5 left-5 p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-100" title="Volver">
+    <!-- 2. PANTALLA DE VERIFICACIÓN (PÚBLICA) -->
+    <div id="verificationScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
+            <button onclick="showScreen('welcomeScreen')" class="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-red-600 mb-6 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Volver</span>
+            </button>
+            
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Verificación en Línea</h2>
+            <p class="text-xs text-gray-500 mb-6">Ingrese el número de cédula del estudiante para consultar la validez de su certificado y descargarlo en PDF.</p>
+            
+            <form id="verifyForm" class="space-y-4">
+                <div class="relative">
+                    <input type="text" id="verifyIdInput" required placeholder="Número de Cédula" class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none text-sm transition-all" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-3.5 text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar Cédula</button>
+            </form>
+
+            <!-- Contenedor de Resultados de Verificación -->
+            <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200"></div>
+        </div>
+    </div>
+
+    <!-- 3. PANTALLA DE LOGIN (PRIVADA) -->
+    <div id="loginScreen" style="background-color: rgba(17, 24, 39, 0.65);" class="hidden fixed inset-0 z-50 flex items-center justify-center no-print p-4">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center relative">
+            <button onclick="showScreen('welcomeScreen')" class="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-800 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            <div class="text-center">
-                <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" class="h-24 mx-auto mb-4 object-contain" />
-                <h2 class="text-2xl font-bold text-gray-800 mb-1">Verificación de Certificados</h2>
-                <p class="text-xs text-gray-500 mb-6">Ingrese el número de documento para validar y descargar certificados.</p>
-            </div>
-            <div class="flex gap-2 mb-6">
-                <input type="text" id="verifyIdInput" placeholder="Ej: 1043131340" class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold" onkeydown="if(event.key==='Enter') verifyDocument()" />
-                <button onclick="verifyDocument()" class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition-colors shadow-md">Consultar</button>
-            </div>
-            <div id="verifyResultContainer" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
-        </div>
-    </div>
-
-    <!-- 3. PANTALLA DE LOGIN (ADMIN) -->
-    <div id="loginScreen" style="background-color: #f3f4f6;" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 no-print">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center relative border border-gray-100">
-            <button onclick="showScreen('welcomeScreen')" class="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-100" title="Volver">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            </button>
-            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" class="h-28 mx-auto mb-4 mt-2 object-contain" />
-            <h2 class="text-2xl font-bold text-gray-800 mb-1">Acceso Restringido</h2>
-            <p class="text-xs text-gray-500 mb-6">Ingrese la clave administrativa.</p>
-            <input type="password" id="adminPassInput" placeholder="Contraseña" autocomplete="off" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium mb-3 text-center" onkeydown="if(event.key==='Enter') checkAdminLogin()" />
-            <p id="loginError" class="hidden text-xs text-red-600 font-semibold mb-3">Contraseña incorrecta.</p>
-            <button onclick="checkAdminLogin()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg">Ingresar al Panel</button>
-        </div>
-    </div>
-
-    <!-- 4. ÁREA DE TRABAJO PRINCIPAL (100% PANTALLA) -->
-    <div id="mainWorkspace" class="hidden h-screen w-full flex-col md:flex-row overflow-hidden bg-gray-200">
-        
-        <!-- Contenedor del Panel (Altura 100% con su propio scroll) -->
-        <div id="adminSidebarHost" class="h-full"></div>
-
-        <!-- Área Central (Vista Previa) -->
-        <div id="previewWrapper" class="flex-1 overflow-auto flex items-center justify-center p-4 md:p-8 relative min-h-screen md:min-h-0 bg-gray-300">
             
-            <button onclick="toggleSidebar()" id="toggleSidebarBtn" class="hidden no-print fixed top-4 right-4 z-30 bg-white text-gray-800 px-3.5 py-2 rounded-lg shadow-lg border border-gray-200 text-xs font-bold items-center gap-2 hover:bg-gray-50 transition-colors">
-                <span id="toggleSidebarText">Ocultar Panel</span>
-            </button>
-
-            <!-- CERTIFICADO -->
-            <div id="certificateElement" class="font-sans-body bg-white relative">
-                <!-- 1. MARCA DE AGUA (FONDO PDF) -->
-                <div id="watermarkContainer" class="absolute inset-0 pointer-events-none z-0 overflow-hidden"></div>
-
-                <!-- 2. CÓDIGO QR -->
-                <div id="qrBoxContainer" style="position: absolute; top: 40px; right: 48px; width: 112px; height: 112px; z-index: 20;" class="flex items-center justify-center"></div>
-
-                <!-- 3. CABECERA -->
-                <div class="text-center w-full relative z-10">
-                    <div class="flex flex-col items-center">
-                        <div class="mb-2 mt-1">
-                            <!-- Logo Nuevo, Tamaño Agrandado -->
-                            <img id="mainCertLogo" src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 160px; width: auto;" class="h-40 mx-auto object-contain" crossorigin="anonymous" />
-                        </div>
-                        <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-0 mt-0">Institución de Educación</h1>
-                        <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-2 mt-0">para el Trabajo y Desarrollo Humano</h1>
-                        <p class="text-[11px] text-gray-800 font-medium tracking-wide">Aprobado por la Secretaría de Educación Distrital de Barranquilla mediante Resolución N° 06077 del 19 de octubre de 2023.</p>
-                        <p class="text-[11px] text-gray-800 font-medium tracking-wide mt-0.5">Educación para el Trabajo y Desarrollo Humano.</p>
-                    </div>
-                </div>
-
-                <!-- 4. CUERPO -->
-                <div class="text-center w-full relative z-10 flex flex-col items-center flex-1 justify-center my-1">
-                    <p class="text-base font-semibold text-gray-800 mb-1 tracking-wide">Hace constar que :</p>
-                    <h2 id="displayName" class="font-serif-title font-bold text-[2.25rem] tracking-wider text-black mb-1 uppercase min-h-[2.6rem] leading-tight px-4"></h2>
-                    <p class="text-xs font-semibold text-gray-800 mb-2">Identificado con cédula de ciudadanía N.° <span id="displayId"></span></p>
-                    <p class="text-base font-semibold text-gray-800 mb-1">Aprobó el curso de:</p>
-                    <h2 id="displayCourse" class="font-serif-title font-black text-[2rem] text-black uppercase mb-2 px-10 leading-tight min-h-[2.4rem]"></h2>
-                    <p class="text-xs font-medium text-gray-800 mb-0.5">Con una duración de ( <span id="displayHours"></span> horas).</p>
-                    <p class="text-xs font-medium text-gray-800 mb-0.5">Dado en Barranquilla, a los <span id="displayDay"></span> de <span id="displayMonth"></span> de <span id="displayYear"></span></p>
-                    <p id="displayValidity" class="text-xs font-semibold text-gray-800"></p>
-                </div>
-
-                <!-- 5. FIRMAS -->
-                <div class="flex justify-between items-end px-12 mt-1 relative z-10 w-full max-w-4xl mx-auto">
-                    <!-- Firma 1 -->
-                    <div class="flex flex-col items-center w-64">
-                        <div id="sign1Wrapper" class="h-20 w-56 relative flex items-end justify-center mb-1">
-                            <div id="sign1ImageContainer" class="w-full h-full flex items-end justify-center"></div>
-                        </div>
-                        <div class="w-full border-t border-gray-800 pt-1 text-center">
-                            <p id="displaySign1Name" class="font-bold text-[11px] text-black uppercase"></p>
-                            <p id="displaySign1Role" class="text-[10px] text-gray-800 font-medium"></p>
-                        </div>
-                    </div>
-                    <!-- Firma 2 -->
-                    <div class="flex flex-col items-center w-64">
-                        <div id="sign2Wrapper" class="h-20 w-56 relative flex items-end justify-center mb-1">
-                            <div id="sign2ImageContainer" class="w-full h-full flex items-end justify-center"></div>
-                        </div>
-                        <div class="w-full border-t border-gray-800 pt-1 text-center">
-                            <p id="displaySign2Name" class="font-bold text-[11px] text-black uppercase"></p>
-                            <p id="displaySign2Role" class="text-[10px] text-gray-800 font-medium"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 6. DATOS DE CONTACTO (PIE DE PÁGINA) -->
-                <div class="flex flex-wrap justify-between items-center px-2 mt-3 pt-2.5 border-t border-gray-100 text-[10.5px] font-semibold relative z-10 gap-2">
-                    <div id="footerEmailItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div><span id="displayEmail" class="text-gray-800"></span></div>
-                    <div id="footerAddressItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div><span id="displayAddress" class="text-gray-800"></span></div>
-                    <div id="footerPhoneItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div><span id="displayPhone" class="text-gray-800"></span></div>
-                    <div id="footerWebsiteItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><span id="displayWebsite" class="text-gray-800"></span></div>
-                </div>
-            </div>
+            <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" style="height: 112px; width: auto;" class="h-28 mx-auto mb-6 mt-2 object-contain" />
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Acceso Restringido</h2>
+            <p class="text-xs text-gray-500 mb-6">Área exclusiva para personal administrativo.</p>
+            
+            <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm font-semibold">Clave incorrecta.</div>
+            
+            <form id="loginForm" class="space-y-4">
+                <input type="password" id="loginPass" required placeholder="Contraseña de Administrador" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm transition-all" />
+                <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Ingresar al Generador</button>
+            </form>
         </div>
     </div>
 
-    <!-- SCRIPT PRINCIPAL Y FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyD-FUNETEC-PORTAL-KEY",
-            authDomain: "funetec-certificados.firebaseapp.com",
-            projectId: "funetec-certificados",
-            storageBucket: "funetec-certificados.appspot.com",
-            messagingSenderId: "100000000000",
-            appId: "1:100000000000:web:abcdef123456"
-        };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'funetec-portal-app';
-
-        let app, db, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-        } catch (e) { console.error("Error Firebase:", e); }
-
-        // --- SISTEMA DE DIÁLOGOS Y ALERTAS (ANTI-BLOQUEOS) ---
-        window.showNotice = function(message, title = "Aviso del Sistema") {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('customModal');
-                if(!modal) { alert(message); resolve(true); return; } // Respaldo nativo si falla el DOM
-                document.getElementById('customModalTitle').textContent = title;
-                document.getElementById('customModalMessage').textContent = message;
-                document.getElementById('customModalCancel').classList.add('hidden');
-                const confirmBtn = document.getElementById('customModalConfirm');
-                confirmBtn.textContent = "Aceptar";
-                modal.style.display = 'flex';
-                confirmBtn.onclick = () => { modal.style.display = 'none'; resolve(true); };
-            });
-        };
-
-        window.showConfirm = function(message, title = "Confirmar Acción") {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('customModal');
-                if(!modal) { resolve(confirm(message)); return; }
-                document.getElementById('customModalTitle').textContent = title;
-                document.getElementById('customModalMessage').textContent = message;
-                const cancelBtn = document.getElementById('customModalCancel');
-                const confirmBtn = document.getElementById('customModalConfirm');
-                cancelBtn.classList.remove('hidden');
-                confirmBtn.textContent = "Sí, continuar";
-                modal.style.display = 'flex';
-                cancelBtn.onclick = () => { modal.style.display = 'none'; resolve(false); };
-                confirmBtn.onclick = () => { modal.style.display = 'none'; resolve(true); };
-            });
-        };
-
-        window.showScreen = function(id) {
-            ['welcomeScreen', 'verifyScreen', 'loginScreen', 'mainWorkspace'].forEach(sid => {
-                const el = document.getElementById(sid);
-                if (el) {
-                    if(sid === 'mainWorkspace' && id === sid) el.classList.remove('hidden', 'flex');
-                    else el.classList.add('hidden');
-                }
-            });
-            const target = document.getElementById(id);
-            if (target) {
-                if(id === 'mainWorkspace') target.classList.remove('hidden');
-                else target.classList.remove('hidden');
-            }
-        };
-
-        // --- AUTENTICACIÓN Y PROTECCIÓN ---
-        let isAdminAuthenticated = false;
-        // Clave encriptada: A7f9K2mX8Q4zT1B
-        const _kCodes = [65,55,102,57,75,50,109,88,56,81,52,122,84,49,66]; 
+    <!-- 4. APLICACIÓN PRINCIPAL GENERADOR -->
+    <div id="mainApp" class="hidden flex-col md:flex-row h-screen">
         
-        window.checkAdminLogin = function() {
-            const pass = document.getElementById('adminPassInput').value.trim();
-            const errEl = document.getElementById('loginError');
+        <div id="sidebar" class="no-print w-full md:w-[26rem] bg-white border-r border-gray-200 p-6 shadow-lg flex flex-col z-20 h-full overflow-y-auto shrink-0 custom-scrollbar">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Panel Administrativo</h2>
+                <div class="flex items-center gap-3">
+                    <button onclick="resetStudentForm()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 underline" title="Limpiar formulario para un nuevo estudiante">Limpiar Datos</button>
+                    <button onclick="logout()" class="text-xs font-semibold text-red-600 hover:text-red-800 underline">Cerrar Sesión</button>
+                </div>
+            </div>
             
-            let valid = false;
-            if(pass.length === _kCodes.length) {
-                valid = true;
-                for (let i = 0; i < _kCodes.length; i++) {
-                    if (pass.charCodeAt(i) !== _kCodes[i]) { valid = false; break; }
-                }
-            }
-
-            if (valid) {
-                isAdminAuthenticated = true;
-                errEl.classList.add('hidden');
-                document.getElementById('adminPassInput').value = '';
-                mountAdminPanel();
-                window.showScreen('mainWorkspace');
-            } else {
-                isAdminAuthenticated = false;
-                errEl.classList.remove('hidden');
-            }
-        };
-
-        window.logoutAdmin = function() {
-            isAdminAuthenticated = false;
-            document.getElementById('adminSidebarHost').innerHTML = ''; // Destrucción total
-            window.showScreen('welcomeScreen');
-        };
-
-        // --- ESTADO GLOBAL ---
-        const state = {
-            name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026',
-            validityType: 'aplica', validityYears: '2',
-            sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
-            sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
-            email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679', website: 'Para validacion del titulo ingresar a: www.funetec.com.co',
-            watermarkMode: 'grid', watermarkOpacity: 5,
-            qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
-            dbRecords: []
-        };
-
-        const WATERMARK_URL = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
-        let watermarkBase64 = '';
-
-        // --- FUNCIONES DE BASE DE DATOS OPTIMIZADAS Y CON TIMEOUT ---
-        function withTimeout(promise, ms = 8000) {
-            return new Promise((resolve, reject) => {
-                const timer = setTimeout(() => reject(new Error("Timeout: La conexión tardó demasiado.")), ms);
-                promise.then(val => { clearTimeout(timer); resolve(val); }).catch(err => { clearTimeout(timer); reject(err); });
-            });
-        }
-
-        async function saveFirestoreSafe(colName, docId, data) {
-            // Limpia variables undefined para evitar errores de Firebase
-            const cleanData = JSON.parse(JSON.stringify(data)); 
-            const path = doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
-            await withTimeout(setDoc(path, cleanData));
-        }
-        
-        async function getFirestoreSafe(colName, docId) {
-            const path = doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
-            return await withTimeout(getDoc(path));
-        }
-
-        async function getCollectionSafe(colName) {
-            const path = collection(db, 'artifacts', appId, 'public', 'data', colName);
-            return await withTimeout(getDocs(path));
-        }
-
-        // --- MONTAJE DEL PANEL Y ACTUALIZACIÓN ---
-        function mountAdminPanel() {
-            const host = document.getElementById('adminSidebarHost');
-            host.innerHTML = `
-            <div id="sidebar" class="no-print h-full w-full md:w-80 lg:w-[22rem] bg-white border-r border-gray-200 p-5 shadow-2xl overflow-y-auto flex flex-col z-20">
-                <div class="flex items-center justify-between mb-5 pb-3 border-b border-gray-100 shrink-0">
-                    <h2 class="text-lg font-extrabold text-gray-800">Panel Admin</h2>
-                    <div class="flex items-center gap-2 text-[10px] font-bold">
-                        <button onclick="resetStudentForm()" class="text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors">Limpiar Datos</button>
-                        <button onclick="logoutAdmin()" class="text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors">Salir</button>
+            <div class="space-y-4 flex-1">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre Completo</label>
+                    <input type="text" id="inputName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Cédula de Ciudadanía</label>
+                    <input type="text" id="inputId" name="id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre del Curso</label>
+                    <textarea id="inputCourse" name="course" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm font-medium"></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <div class="w-1/3">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Horas</label>
+                        <input type="number" id="inputHours" name="hours" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                    </div>
+                    <div class="w-2/3">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Vigencia</label>
+                        <div class="flex gap-2">
+                            <select id="inputValidityType" name="validityType" class="flex-1 px-2 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-[13px] font-medium bg-white">
+                                <option value="aplica">Aplica (Años)</option>
+                                <option value="no caduca">No caduca</option>
+                                <option value="ocultar">No aplica</option>
+                            </select>
+                            <input type="number" id="inputValidityYears" name="validityYears" min="1" class="w-16 px-2 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium text-center" />
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Día</label>
+                        <input type="text" id="inputDay" name="day" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Mes</label>
+                        <input type="text" id="inputMonth" name="month" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Año</label>
+                        <input type="text" id="inputYear" name="year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
                     </div>
                 </div>
 
-                <div class="space-y-3.5 shrink-0">
-                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre Completo</label><input type="text" id="inputName" placeholder="Ej: FRANKLIN TORRES JIMENEZ" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold uppercase transition-colors" /></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cédula</label><input type="text" id="inputId" placeholder="Ej: 73575155" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold transition-colors" /></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Curso</label><textarea id="inputCourse" rows="2" placeholder="Ej: ATENCIÓN PSICOSOCIAL..." class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm font-bold uppercase transition-colors"></textarea></div>
-                    
-                    <div class="grid grid-cols-12 gap-2">
-                        <div class="col-span-4"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Horas</label><input type="number" id="inputHours" value="5" class="w-full px-3 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold" /></div>
-                        <div class="col-span-8"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Vigencia</label>
-                            <div class="flex gap-1">
-                                <select id="inputValidityType" class="flex-1 px-1 py-1.5 border border-gray-300 rounded outline-none text-[11px] font-bold bg-white"><option value="aplica">Aplica (Años)</option><option value="no caduca">No Caduca</option><option value="ocultar">Ocultar</option></select>
-                                <input type="number" id="inputValidityYears" value="2" class="w-12 px-1 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" />
+                <!-- Sección: Código QR -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            <span>Código QR (Superior Derecha)</span>
+                        </h3>
+                        <button type="button" onclick="clearQR()" class="text-[10px] text-red-600 hover:underline font-semibold">Quitar QR</button>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <div id="qrSidebarThumb" style="width: 48px; height: 48px;" class="w-12 h-12 rounded border border-gray-300 bg-white flex items-center justify-center shrink-0 overflow-hidden text-[9px] text-gray-400 text-center leading-tight p-1">
+                                Sin QR
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <label id="qrStatusLabel" class="block text-[10px] font-semibold text-gray-700 uppercase mb-1">Subir Imagen QR Única</label>
+                                <input type="file" id="uploadQR" accept="image/*" class="w-full text-xs text-gray-600" />
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-gray-200 mt-2">
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Tamaño (%)</label>
+                            <input type="range" id="inputQrSize" name="qrSize" min="20" max="250" value="100" class="w-full" />
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↔ (X)</label><input type="range" id="inputQrX" name="qrX" min="-150" max="150" value="0" class="w-full" /></div>
+                                <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↕ (Y)</label><input type="range" id="inputQrY" name="qrY" min="-100" max="100" value="0" class="w-full" /></div>
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Día</label><input type="text" id="inputDay" value="1" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" /></div>
-                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Mes</label><input type="text" id="inputMonth" value="Abril" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" /></div>
-                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Año</label><input type="text" id="inputYear" value="2026" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" /></div>
+                </div>
+
+                <!-- Sección: Marca de Agua (Fondo 7x6) -->
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-gray-800 uppercase">Marca de Agua (Fondo PDF 7x6)</h3>
+                        <select id="inputWatermarkMode" name="watermarkMode" class="px-2 py-1 border border-gray-300 rounded text-[11px] font-semibold bg-white outline-none">
+                            <option value="grid">Cuadrícula 7x6 (Todo el PDF)</option>
+                            <option value="full">Imagen Completa</option>
+                        </select>
+                    </div>
+                    <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+                        <div class="flex justify-between text-[10px] font-semibold text-gray-600 uppercase mb-1">
+                            <span>Intensidad / Visibilidad</span>
+                            <span id="watermarkOpacityValue" class="text-red-600 font-bold">5%</span>
+                        </div>
+                        <input type="range" id="inputWatermarkOpacity" name="watermarkOpacity" min="1" max="100" value="5" class="w-full" />
                     </div>
                 </div>
 
-                <!-- QR Y MARCA DE AGUA -->
-                <div class="mt-5 pt-4 border-t border-gray-200 shrink-0">
-                    <div class="flex justify-between items-center mb-1"><h3 class="text-[11px] font-extrabold text-gray-800 uppercase flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> CÓDIGO QR (SUPERIOR DERECHA)</h3><button onclick="clearQR()" class="text-[9px] font-bold text-red-500 hover:underline">Quitar QR</button></div>
-                    <div class="bg-red-50 p-2.5 rounded border border-red-100 space-y-2">
-                        <div class="flex items-center gap-2">
-                            <div id="qrSidebarThumb" class="w-10 h-10 rounded border border-gray-300 bg-white flex items-center justify-center shrink-0 overflow-hidden text-[8px] text-gray-400 p-0.5 text-center leading-tight">Sin QR</div>
-                            <div class="flex-1 overflow-hidden"><label class="block text-[9px] font-bold text-gray-600 uppercase mb-0.5">SUBIR IMAGEN QR ÚNICA</label><input type="file" id="uploadQR" accept="image/*" class="w-full text-[10px] text-gray-600" /></div>
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500"><span>TAMAÑO (%)</span><input type="range" id="inputQrSize" min="50" max="180" value="100" class="w-28 accent-red-600" /></div>
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500"><span>MOVER ↔ (X)</span><input type="range" id="inputQrX" min="-150" max="150" value="0" class="w-28 accent-red-600" /></div>
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500"><span>MOVER ↕ (Y)</span><input type="range" id="inputQrY" min="-100" max="150" value="0" class="w-28 accent-red-600" /></div>
-                        </div>
-                    </div>
+                <!-- Sección: Excel Masivo -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-800 mb-2">Generación Masiva (Excel)</h3>
+                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Configura el curso arriba (o incluye una columna <b>"Curso"</b> en tu Excel), y sube el archivo con columnas <b>"Nombre"</b> y <b>"Cedula"</b>.</p>
+                    <input type="file" id="uploadExcel" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 mb-3 border border-gray-200 rounded p-1.5 bg-gray-50" />
                     
-                    <h3 class="text-[11px] font-extrabold text-gray-800 uppercase mt-4 mb-1">Marca de Agua (Fondo PDF)</h3>
-                    <div class="bg-gray-50 p-2.5 rounded border border-gray-200">
-                        <select id="inputWatermarkMode" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px] font-bold bg-white mb-2"><option value="grid">Cuadrícula (Todo el PDF)</option><option value="single">Marca Central Única</option><option value="none">Sin Marca de Agua</option></select>
-                        <div class="flex justify-between text-[9px] font-bold text-gray-500 mb-0.5"><span>Intensidad / Visibilidad</span><span id="watermarkOpacityLabel">5%</span></div>
-                        <input type="range" id="inputWatermarkOpacity" min="1" max="40" value="5" class="w-full accent-blue-600" />
+                    <div id="bulkButtonsContainer" class="hidden flex-col gap-2 space-y-2">
+                        <button id="btnBulkZip" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>DESCARGAR ZIP Y GUARDAR</span>
+                        </button>
+                        <button id="btnBulkCloud" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-md text-sm flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 10.18a5.22 5.22 0 0 0-7.16-2.52 7 7 0 0 0-11 4.54A4.5 4.5 0 0 0 6 21h12.5a4.5 4.5 0 0 0 1.92-8.82z"></path><polyline points="12 12 12 18"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>
+                            <span>SOLO SUBIR A LA NUBE</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- CONFIGURACIÓN PREDETERMINADA -->
-                <div class="mt-5 pt-4 border-t border-gray-200 shrink-0 space-y-4">
-                    <!-- Contacto -->
-                    <div class="bg-gray-50 p-2.5 rounded border border-gray-200 space-y-1.5">
-                        <p class="text-[9px] font-extrabold text-gray-500 uppercase">DATOS DE CONTACTO (PIE DE PÁGINA)</p>
-                        <input type="text" id="inputEmail" value="funetec2022@gmail.com" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="Email" />
-                        <input type="text" id="inputAddress" value="calle 47#18_24 Barranquilla" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="Dirección" />
-                        <input type="text" id="inputPhone" value="3046781679" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="Teléfono" />
-                        <input type="text" id="inputWebsite" value="Para validacion de titulo ingresar a: www.funetec.com.co" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="URL Web" />
+                <!-- BD LOCAL LISTA (Buscador Unificado) -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-800">Base de Datos de Certificados</h3>
+                        <button onclick="loadDBRecords()" class="text-gray-400 hover:text-gray-800 transition-colors" title="Actualizar Lista">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <div class="relative">
+                            <input type="text" id="searchDBInput" oninput="renderDBList(this.value)" placeholder="Buscar nombre o cédula..." class="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-xs font-medium" />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="top: 10px;" class="absolute left-2.5 text-gray-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                    </div>
+                    <div id="dbRecordsList" class="space-y-3 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                        <!-- La lista se mantiene oculta hasta escribir en el buscador -->
+                    </div>
+                </div>
+
+                <!-- Configuración de Firmas -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">Configuración de Firmas</h3>
+                    <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <h4 class="text-xs font-bold text-gray-700 mb-2">Firma Izquierda</h4>
+                        <div class="space-y-2">
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Nombre</label><input type="text" id="inputSign1Name" name="sign1Name" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Cargo</label><input type="text" id="inputSign1Role" name="sign1Role" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Subir Imagen</label><input type="file" id="uploadSign1" accept="image/*" class="w-full text-xs text-gray-500" /></div>
+                            <div class="pt-2 border-t border-gray-200 mt-2">
+                                <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Tamaño (%)</label><input type="range" id="inputSign1Size" name="sign1Size" min="20" max="300" value="100" class="w-full" />
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↔ (X)</label><input type="range" id="inputSign1X" name="sign1X" min="-150" max="150" value="0" class="w-full" /></div>
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↕ (Y)</label><input type="range" id="inputSign1Y" name="sign1Y" min="-100" max="100" value="0" class="w-full" /></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <h4 class="text-xs font-bold text-gray-700 mb-2">Firma Derecha</h4>
+                        <div class="space-y-2">
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Nombre</label><input type="text" id="inputSign2Name" name="sign2Name" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Cargo</label><input type="text" id="inputSign2Role" name="sign2Role" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                            <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Subir Imagen</label><input type="file" id="uploadSign2" accept="image/*" class="w-full text-xs text-gray-500" /></div>
+                            <div class="pt-2 border-t border-gray-200 mt-2">
+                                <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Tamaño (%)</label><input type="range" id="inputSign2Size" name="sign2Size" min="20" max="300" value="100" class="w-full" />
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↔ (X)</label><input type="range" id="inputSign2X" name="sign2X" min="-150" max="150" value="0" class="w-full" /></div>
+                                    <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mover ↕ (Y)</label><input type="range" id="inputSign2Y" name="sign2Y" min="-100" max="100" value="0" class="w-full" /></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datos de Contacto -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">Datos de Contacto</h3>
+                    <div class="space-y-3">
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Correo Electrónico</label><input type="text" id="inputEmail" name="email" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Dirección</label><input type="text" id="inputAddress" name="address" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Teléfono</label><input type="text" id="inputPhone" name="phone" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">URL Web</label><input type="text" id="inputWebsite" name="website" placeholder="Ej: cofunetec.vercel.app" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-xs font-medium" /></div>
                     </div>
                     
-                    <!-- Botón de Guardar Default -->
-                    <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full bg-blue-600 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-blue-700 transition-colors shadow flex justify-center items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        Guardar Configuración Como Predeterminada
+                    <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full mt-5 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-2.5 px-3 rounded-lg font-bold hover:bg-blue-100 transition-colors shadow-sm border border-blue-200 text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <span>GUARDAR CONFIGURACIÓN COMO PREDETERMINADA</span>
                     </button>
                 </div>
-
-                <!-- ACCIONES DE GUARDADO -->
-                <div class="mt-5 pt-4 border-t border-gray-200 shrink-0 space-y-2">
-                    <button onclick="saveIndividualOnly()" class="w-full bg-red-600 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-red-700 transition-colors shadow">GUARDAR EN LA NUBE (SOLO REGISTRO)</button>
-                    <button onclick="downloadIndividualPDF()" class="w-full bg-emerald-600 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-emerald-700 transition-colors shadow">DESCARGAR PDF CON QR</button>
-                    <button onclick="printAndSaveIndividual()" class="w-full bg-gray-900 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-gray-800 transition-colors shadow">IMPRIMIR / GUARDAR PDF</button>
+                
+                <!-- Botones Individuales Separados -->
+                <div class="mt-6 pt-6 border-t border-gray-200 flex flex-col gap-3 pb-8 space-y-2">
+                    <button onclick="downloadIndividualPDF()" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>DESCARGAR PDF</span>
+                    </button>
+                    <button onclick="printAndSaveIndividual()" class="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span>IMPRIMIR</span>
+                    </button>
+                    <button onclick="saveIndividualOnly()" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 10.18a5.22 5.22 0 0 0-7.16-2.52 7 7 0 0 0-11 4.54A4.5 4.5 0 0 0 6 21h12.5a4.5 4.5 0 0 0 1.92-8.82z"></path><polyline points="12 12 12 18"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>
+                        <span>GUARDAR EN LA NUBE</span>
+                    </button>
                 </div>
+                
+            </div>
+        </div>
 
-                <!-- BASE DE DATOS LIGERA -->
-                <div class="mt-5 pt-4 border-t border-gray-200 flex-1 min-h-[200px] flex flex-col">
-                    <div class="flex justify-between items-center mb-2 shrink-0">
-                        <h3 class="text-[11px] font-extrabold text-gray-800 uppercase">Base de Datos</h3>
-                        <span id="dbCountBadge" class="text-[9px] font-bold bg-gray-200 px-1.5 py-0.5 rounded-full">0</span>
+        <!-- VISTA PREVIA (DOCUMENTO) -->
+        <div id="previewWrapper" class="flex-1 relative overflow-hidden bg-gray-300 z-10">
+            <button onclick="toggleSidebar()" class="absolute top-4 right-4 z-50 bg-white p-2.5 rounded-lg shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-black transition-all flex items-center gap-2 no-print">
+                <svg id="iconCollapse" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                <svg id="iconExpand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+                <span id="textToggleSidebar" class="text-sm font-semibold">Ocultar Panel</span>
+            </button>
+
+            <div id="documentScaleWrapper" class="absolute top-1/2 left-1/2 origin-center" style="width: 1056px; height: 816px;">
+                <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-12 pb-10 px-16 font-sans-body" style="width: 1056px; height: 816px;">
+                    
+                    <!-- Marca de Agua de Fondo (7x6) -->
+                    <div id="watermarkContainer" class="absolute inset-0 z-[1] pointer-events-none overflow-hidden flex flex-col justify-between py-6 px-6 select-none"></div>
+
+                    <!-- Código QR (Superior Derecha) -->
+                    <div id="qrImageContainer" style="width: 112px; height: 112px; top: 40px; right: 64px;" class="absolute top-10 right-16 w-28 h-28 flex items-center justify-center z-20 overflow-visible">
+                        <div onclick="document.getElementById('uploadQR').click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer text-gray-400 p-2 text-center" title="Haz clic para subir tu imagen QR">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
+                        </div>
                     </div>
-                    <input type="text" id="searchDBInput" placeholder="Buscar alumno..." class="w-full px-2 py-1.5 border border-gray-300 rounded text-[10px] font-bold mb-2 shrink-0 outline-none focus:border-red-500" />
-                    <div id="dbListContainer" class="flex-1 overflow-y-auto space-y-1.5 pr-1 pb-4"></div>
-                </div>
-            </div>`;
-            
-            document.getElementById('toggleSidebarBtn').classList.remove('hidden', 'flex');
-            document.getElementById('toggleSidebarBtn').classList.add('flex');
-            bindAdminEvents();
-            updateDisplay();
-            window.loadDBRecords();
-        }
 
-        window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const text = document.getElementById('toggleSidebarText');
-            if (sidebar.classList.contains('hidden')) { sidebar.classList.remove('hidden'); text.textContent = 'Ocultar Panel'; }
-            else { sidebar.classList.add('hidden'); text.textContent = 'Mostrar Panel'; }
+                    <div class="text-center w-full relative z-10">
+                        <div class="flex flex-col items-center">
+                            <div class="mb-4 mt-2">
+                                <img src="https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png" alt="Logo FUNETEC" style="height: 160px; width: auto;" class="h-40 mx-auto object-contain" crossorigin="anonymous" />
+                            </div>
+                            <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-0 mt-0">Institución de Educación</h1>
+                            <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-3 mt-0">para el Trabajo y Desarrollo Humano</h1>
+                            <p class="text-[11px] text-gray-700 font-normal mb-0 mt-0">Aprobado por la Secretaría de Educación Distrital de Barranquilla mediante Resolución N° 06077 del 19 de octubre de 2023.</p>
+                            <p class="text-[11px] text-gray-700 font-normal mt-0 mb-0">Educación para el Trabajo y Desarrollo Humano.</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center w-full relative z-10 flex flex-col items-center mt-4">
+                        <p class="text-[15px] text-black font-normal mb-4 mt-0">Hace constar que :</p>
+                        <h2 id="displayName" class="font-serif-title font-bold text-[2.4rem] tracking-wide text-black mb-4 mt-0 uppercase min-h-[3rem]"></h2>
+                        <p class="text-[12px] text-black font-normal mb-4 mt-0">Identificado con cédula de ciudadanía N.° <span id="displayId"></span></p>
+                        <p class="text-[15px] text-black font-normal mb-2 mt-0">Aprobó el curso de:</p>
+                        <h2 id="displayCourse" class="font-serif-title font-bold text-[2.1rem] tracking-wide text-black uppercase mb-4 mt-0 px-12 leading-tight min-h-[2.5rem]"></h2>
+                    </div>
+
+                    <div class="flex justify-between items-end px-4 mt-6 w-full relative z-10 max-w-5xl mx-auto">
+                        <div class="w-64 text-center" style="width: 256px;">
+                            <div id="sign1ImageContainer" style="height: 64px;" class="h-16 flex items-end justify-center mb-1 relative overflow-visible">
+                                <svg viewBox="0 0 200 80" style="width: 192px; height: 100%;" class="w-48 h-full object-contain relative z-10" stroke="black" fill="none"><path d="M 40,60 C 20,40 50,20 60,30 C 70,40 40,70 60,60 C 80,50 90,40 100,50 C 110,60 100,70 120,60 C 140,50 160,30 150,20 C 140,10 130,40 140,50 C 150,60 170,40 180,30" stroke-width="1.5" stroke-linecap="round" /></svg>
+                            </div>
+                            <div class="border-t border-black w-full mb-1 relative z-20" style="border-top: 1px solid #000;"></div>
+                            <p id="displaySign1Name" class="font-bold text-[10px] text-black uppercase m-0 leading-tight"></p>
+                            <p id="displaySign1Role" class="text-[10px] text-black m-0 leading-tight"></p>
+                        </div>
+
+                        <div class="flex-1 text-center text-[12px] text-gray-800 pb-5 px-4 font-normal">
+                            <p class="mb-1 mt-0">Con una duración de ( <span id="displayHours"></span> horas).</p>
+                            <p class="mb-1 mt-0">Dado en Barranquilla, a los <span id="displayDay"></span> de <span id="displayMonth"></span> de <span id="displayYear"></span></p>
+                            <p id="validityContainer" class="mb-0 mt-0">( <span id="displayValidity"></span> )</p>
+                        </div>
+
+                        <div class="w-64 text-center" style="width: 256px;">
+                            <div id="sign2ImageContainer" style="height: 64px;" class="h-16 flex items-end justify-center mb-1 relative overflow-visible">
+                                <svg viewBox="0 0 200 80" style="width: 192px; height: 100%;" class="w-48 h-full object-contain relative z-10" stroke="black" fill="none"><path d="M 30,70 L 80,20 L 60,60 L 100,30 L 90,60 L 130,40 L 120,60 L 160,30 C 170,40 160,70 170,60 C 180,50 190,40 180,30" stroke-width="1.5" stroke-linecap="round" /><path d="M 160,40 C 170,30 180,70 160,60 C 140,50 180,20 190,40" stroke-width="1.5" /></svg>
+                            </div>
+                            <div class="border-t border-black w-full mb-1 relative z-20" style="border-top: 1px solid #000;"></div>
+                            <p id="displaySign2Name" class="font-bold text-[10px] text-black uppercase m-0 leading-tight"></p>
+                            <p id="displaySign2Role" class="text-[10px] text-black m-0 leading-tight"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-between items-center px-6 mt-4 text-[11px] font-bold text-gray-800 relative z-10 pb-2">
+                        <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M5.5 8C5.22 8 5 8.22 5 8.5v7c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-7c0-.28-.22-.5-.5-.5h-13zm0 1.5h13v.5l-6.5 4-6.5-4v-.5z" fill="white"/></svg><span id="displayEmail"></span></div>
+                        <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#d32f2f"/></svg><span id="displayAddress"></span></div>
+                        <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M16.9 14.44c-.78 0-1.55-.12-2.28-.36a.88.88 0 0 0-.89.21l-1.4 1.4c-1.83-.93-3.32-2.42-4.25-4.25l1.4-1.4a.88.88 0 0 0 .21-.89 6.8 6.8 0 0 1-.36-2.28c0-.49-.4-.88-.88-.88H5.38C4.9 6 4.5 6.4 4.5 6.88 4.5 13.63 10 19.12 16.75 19.12c.49 0 .88-.4.88-.88v-2.92c0-.48-.4-.88-.88-.88z" fill="white"/></svg><span id="displayPhone"></span></div>
+                        <div id="websiteContainer" class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm5.9 7h-2.95c-.12-1.85-.6-3.54-1.38-4.88A6.02 6.02 0 0 1 17.9 11zM12 5.04c.83 1.2 1.48 2.94 1.62 4.96h-3.24c.14-2.02.79-3.76 1.62-4.96zM5.04 13h2.95c.12 1.85.6 3.54 1.38 4.88A6.02 6.02 0 0 1 5.04 13zm2.95-2H5.04a6.02 6.02 0 0 1 4.33-4.88C8.59 7.46 8.11 9.15 7.99 11zm4.01 7.96c-.83-1.2-1.48-2.94-1.62-4.96h3.24c-.14 2.02-.79 3.76-1.62 4.96zm2.63-1.08c.78-1.34 1.26-3.03 1.38-4.88h2.95a6.02 6.02 0 0 1-4.33 4.88z" fill="white"/></svg><span id="displayWebsite"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integración FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCUKkHkkwcH6VvMNX14KY8L_P3KAO1qoo",
+            authDomain: "generadorverificaciondiplomas.firebaseapp.com",
+            databaseURL: "https://generadorverificaciondiplomas-default-rtdb.firebaseio.com",
+            projectId: "generadorverificaciondiplomas",
+            storageBucket: "generadorverificaciondiplomas.firebasestorage.app",
+            messagingSenderId: "241061200480",
+            appId: "1:241061200480:web:bd8ba05cf7b761f49a3905"
         };
 
-        // --- MANEJO DE IMÁGENES Y DISPLAY ---
-        async function loadWatermarkBase64() {
-            try {
-                const res = await fetch(WATERMARK_URL, { mode: 'cors' });
-                const blob = await res.blob();
-                const reader = new FileReader();
-                reader.onloadend = () => { watermarkBase64 = reader.result; window.renderWatermark(); };
-                reader.readAsDataURL(blob);
-            } catch(e) { console.warn("Error cargando marca de agua"); }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        signInAnonymously(auth).catch((error) => console.error("Error Auth Firebase:", error));
+
+        const WATERMARK_URL_RAW = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
+        const WATERMARK_URL_DIRECT = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
+        const LOGO_URL_FALLBACK = "https://image2url.com/r2/default/images/1775101300334-ad67892e-47ad-44d4-aa2b-b970337e6dba.png";
+
+        const state = { 
+            name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
+            validityType: 'aplica', validityYears: '2', 
+            qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
+            watermarkMode: 'grid', watermarkOpacity: 5, watermarkProcessedSrc: '',
+            sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
+            sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
+            email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679', website: 'cofunetec.vercel.app',
+            bulkStudents: [],
+            dbRecords: []
+        };
+
+        window.showScreen = function(screenId) {
+            ['welcomeScreen', 'verificationScreen', 'loginScreen', 'mainApp'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    if(id === screenId) {
+                        el.classList.remove('hidden');
+                        if(id === 'mainApp') el.classList.add('flex');
+                    } else {
+                        el.classList.add('hidden');
+                        if(id === 'mainApp') el.classList.remove('flex');
+                    }
+                }
+            });
+            if(screenId === 'mainApp') {
+                setTimeout(adjustScale, 100);
+                window.loadDBRecords();
+                window.loadSignatureConfig();
+            }
+        };
+
+        window.logout = function() {
+            sessionStorage.removeItem('funetec_auth');
+            window.showScreen('welcomeScreen');
+        };
+
+        window.toggleSidebar = function() {
+            let sbVis = document.getElementById('sidebar').style.display !== 'none';
+            sbVis = !sbVis;
+            document.getElementById('sidebar').style.display = sbVis ? '' : 'none';
+            document.getElementById('iconCollapse').classList.toggle('hidden', !sbVis);
+            document.getElementById('iconExpand').classList.toggle('hidden', sbVis);
+            document.getElementById('textToggleSidebar').textContent = sbVis ? "Ocultar Panel" : "Mostrar Panel";
+            setTimeout(adjustScale, 10); setTimeout(adjustScale, 150);
+        };
+
+        function adjustScale() {
+            const w = document.getElementById('previewWrapper'), s = document.getElementById('documentScaleWrapper');
+            if(!window.matchMedia('print').matches && w && s) {
+                const aW = w.clientWidth - 40, aH = w.clientHeight - 40;
+                if(aW > 0 && aH > 0) {
+                    const scale = Math.min(aW/1056, aH/816);
+                    s.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                }
+            } else if(s) s.style.transform = 'none';
         }
+        window.addEventListener('resize', adjustScale);
+
+        window.showNotice = function(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const msgEl = document.getElementById('customModalMessage');
+                const btnsEl = document.getElementById('customModalButtons');
+                msgEl.textContent = message;
+                btnsEl.innerHTML = `<button id="modalOkBtn" class="bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg text-xs transition-colors shadow">Aceptar</button>`;
+                modal.classList.remove('hidden');
+                document.getElementById('modalOkBtn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(true);
+                };
+            });
+        };
+
+        window.showConfirm = function(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const msgEl = document.getElementById('customModalMessage');
+                const btnsEl = document.getElementById('customModalButtons');
+                msgEl.textContent = message;
+                btnsEl.innerHTML = `
+                    <button id="modalCancelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg text-xs transition-colors">Cancelar</button>
+                    <button id="modalConfirmBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors shadow">Confirmar</button>
+                `;
+                modal.classList.remove('hidden');
+                document.getElementById('modalCancelBtn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(false);
+                };
+                document.getElementById('modalConfirmBtn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(true);
+                };
+            });
+        };
+
+        window.saveSignatureConfig = async function() {
+            const btn = document.getElementById('btnSaveSigns');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Guardando...';
+            btn.disabled = true;
+
+            try {
+                await setDoc(doc(db, "configuracion", "firmas"), {
+                    sign1Name: state.sign1Name,
+                    sign1Role: state.sign1Role,
+                    sign1Size: state.sign1Size,
+                    sign1X: state.sign1X,
+                    sign1Y: state.sign1Y,
+                    sign1Image: state.sign1Image || '',
+                    
+                    sign2Name: state.sign2Name,
+                    sign2Role: state.sign2Role,
+                    sign2Size: state.sign2Size,
+                    sign2X: state.sign2X,
+                    sign2Y: state.sign2Y,
+                    sign2Image: state.sign2Image || '',
+                    
+                    email: state.email,
+                    address: state.address,
+                    phone: state.phone,
+                    website: state.website || '',
+                    watermarkMode: state.watermarkMode || 'grid',
+                    watermarkOpacity: Number(state.watermarkOpacity || 10)
+                });
+                await window.showNotice("¡Configuración predeterminada guardada! Las firmas, marca de agua y datos de contacto cargarán automáticamente la próxima vez que entres.");
+            } catch(error) {
+                console.error("Error guardando configuración:", error);
+                if (error.code === 'permission-denied') {
+                    await window.showNotice("⚠️ Error de Permisos en Firebase:\nTu base de datos está bloqueando el guardado. Asegúrate de permitir escritura en la colección 'configuracion'.");
+                } else if (error.message && error.message.includes('exceed')) {
+                    await window.showNotice("⚠️ Error de Tamaño:\nLas imágenes siguen siendo demasiado pesadas. Intenta con una imagen más sencilla.");
+                } else {
+                    await window.showNotice("Error al guardar en la nube: " + error.message);
+                }
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.renderQRBox = function() {
+            const container = document.getElementById('qrImageContainer');
+            const thumb = document.getElementById('qrSidebarThumb');
+            const statusLabel = document.getElementById('qrStatusLabel');
+            if (!container) return;
+
+            if (state.qrImage) {
+                const baseSize = 112;
+                const scale = (Number(state.qrSize) || 100) / 100;
+                const finalSize = Math.round(baseSize * scale);
+                const offsetX = Number(state.qrX) || 0;
+                const offsetY = Number(state.qrY) || 0;
+
+                container.innerHTML = `
+                    <img id="qrActiveImg" src="${state.qrImage}" alt="Código QR" 
+                        style="width: ${finalSize}px; height: ${finalSize}px; max-width: none; max-height: none; transform: translate(${offsetX}px, ${offsetY}px); object-fit: contain;" 
+                        class="relative z-20 block select-none" />
+                `;
+                if (thumb) {
+                    thumb.innerHTML = `<img src="${state.qrImage}" alt="QR" style="width: 100%; height: 100%; object-fit: contain;" />`;
+                }
+                if (statusLabel) {
+                    statusLabel.textContent = "QR Único Activo (Cargado)";
+                    statusLabel.classList.remove('text-gray-700');
+                    statusLabel.classList.add('text-green-700');
+                }
+            } else {
+                container.innerHTML = `
+                    <div onclick="document.getElementById('uploadQR').click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer text-gray-400 p-2 text-center" title="Haz clic para subir tu imagen QR">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
+                    </div>
+                `;
+                if (thumb) {
+                    thumb.innerHTML = 'Sin QR';
+                }
+                if (statusLabel) {
+                    statusLabel.textContent = "Subir Imagen QR Única";
+                    statusLabel.classList.remove('text-green-700');
+                    statusLabel.classList.add('text-gray-700');
+                }
+            }
+        };
 
         window.renderWatermark = function() {
             const container = document.getElementById('watermarkContainer');
             if (!container) return;
-            const mode = state.watermarkMode || 'grid';
-            const opacity = Math.max(0.01, Math.min(1, Number(state.watermarkOpacity ?? 5) / 100));
-            const src = watermarkBase64 || WATERMARK_URL;
-            if (document.getElementById('watermarkOpacityLabel')) document.getElementById('watermarkOpacityLabel').textContent = `${state.watermarkOpacity}%`;
 
-            if (mode === 'none') { container.innerHTML = ''; return; }
-            if (mode === 'single') {
-                container.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: ${opacity};"><img src="${src}" alt="" style="width: 480px; height: auto; object-fit: contain;" /></div>`;
-                return;
-            }
-            
-            // 7x6 Grid
-            let itemsHtml = '';
-            for (let i = 0; i < 42; i++) { itemsHtml += `<div style="display: flex; align-items: center; justify-content: center;"><img src="${src}" style="width: 75px; height: auto; object-fit: contain; opacity: ${opacity};" /></div>`; }
-            container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); width: 100%; height: 100%; padding: 18px 28px; gap: 6px;">${itemsHtml}</div>`;
-        };
+            const srcToUse = state.watermarkProcessedSrc || WATERMARK_URL_RAW;
+            const rawOpacity = Number(state.watermarkOpacity ?? 10);
+            const opacityFraction = Math.max(0.02, Math.min(1, rawOpacity / 100));
+            const opacityLabel = document.getElementById('watermarkOpacityValue');
+            if (opacityLabel) opacityLabel.textContent = `${rawOpacity}%`;
 
-        window.renderQRBox = function() {
-            const container = document.getElementById('qrBoxContainer');
-            const thumb = document.getElementById('qrSidebarThumb');
-            if (!container) return;
-
-            const baseSize = 112;
-            const scale = Number(state.qrSize || 100) / 100;
-            const finalSize = Math.round(baseSize * scale);
-            container.style.width = `${finalSize}px`; container.style.height = `${finalSize}px`;
-            container.style.right = `${48 - Number(state.qrX || 0)}px`; container.style.top = `${40 + Number(state.qrY || 0)}px`;
-
-            if (state.qrImage) {
-                container.innerHTML = `<img src="${state.qrImage}" style="width: 100%; height: 100%; object-fit: contain; display: block;" />`;
-                if(thumb) thumb.innerHTML = `<img src="${state.qrImage}" class="w-full h-full object-contain" />`;
+            if (state.watermarkMode === 'full') {
+                container.className = "absolute inset-0 z-[1] pointer-events-none overflow-hidden flex items-center justify-center select-none";
+                container.innerHTML = `<img src="${srcToUse}" onerror="if(this.src !== '${WATERMARK_URL_DIRECT}' && this.src !== '${LOGO_URL_FALLBACK}') { this.src='${WATERMARK_URL_DIRECT}'; } else if(this.src !== '${LOGO_URL_FALLBACK}') { this.src='${LOGO_URL_FALLBACK}'; }" alt="" style="width: 100%; height: 100%; object-fit: cover; opacity: ${opacityFraction};" />`;
             } else {
-                container.innerHTML = isAdminAuthenticated ? `<div onclick="document.getElementById('uploadQR')?.click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 p-2 text-center hover:border-red-400"><span class="text-[9px] font-bold leading-tight">ESPACIO QR</span></div>` : '';
-                if(thumb) thumb.innerHTML = 'Sin QR';
+                container.className = "absolute inset-0 z-[1] pointer-events-none overflow-hidden flex flex-col justify-between py-6 px-6 select-none";
+                let rowsHtml = '';
+                for (let r = 0; r < 6; r++) {
+                    let colsHtml = '';
+                    for (let c = 0; c < 7; c++) {
+                        colsHtml += `
+                            <div class="flex items-center justify-center">
+                                <img src="${srcToUse}" onerror="if(this.src !== '${WATERMARK_URL_DIRECT}' && this.src !== '${LOGO_URL_FALLBACK}') { this.src='${WATERMARK_URL_DIRECT}'; } else if(this.src !== '${LOGO_URL_FALLBACK}') { this.src='${LOGO_URL_FALLBACK}'; }" alt="" style="width: 75px; height: auto; max-height: 75px; object-fit: contain; opacity: ${opacityFraction};" />
+                            </div>
+                        `;
+                    }
+                    rowsHtml += `<div class="grid grid-cols-7 gap-2 w-full items-center">${colsHtml}</div>`;
+                }
+                container.innerHTML = rowsHtml;
             }
         };
 
-        window.clearQR = function() {
-            state.qrImage = ''; state.qrSize = 100; state.qrX = 0; state.qrY = 0;
-            if(document.getElementById('uploadQR')) document.getElementById('uploadQR').value = '';
-            window.renderQRBox(); updateDisplay();
-        };
+        window.initWatermark = function() {
+            window.renderWatermark();
 
-        window.updateDisplay = function() {
-            const sync = (id, val) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = val || ''; };
-            
-            sync('inputName', state.name); sync('inputId', state.id); sync('inputCourse', state.course); sync('inputHours', state.hours);
-            sync('inputDay', state.day); sync('inputMonth', state.month); sync('inputYear', state.year);
-            sync('inputValidityType', state.validityType); sync('inputValidityYears', state.validityYears);
-            sync('inputEmail', state.email); sync('inputAddress', state.address); sync('inputPhone', state.phone); sync('inputWebsite', state.website);
-            sync('inputWatermarkMode', state.watermarkMode); sync('inputWatermarkOpacity', state.watermarkOpacity);
-            sync('inputQrSize', state.qrSize); sync('inputQrX', state.qrX); sync('inputQrY', state.qrY);
+            const candidateUrls = [
+                WATERMARK_URL_RAW,
+                WATERMARK_URL_DIRECT,
+                `https://wsrv.nl/?url=${encodeURIComponent(WATERMARK_URL_RAW)}&output=png`,
+                `https://corsproxy.io/?${encodeURIComponent(WATERMARK_URL_RAW)}`,
+                LOGO_URL_FALLBACK
+            ];
 
-            document.getElementById('displayName').textContent = state.name; document.getElementById('displayId').textContent = state.id;
-            document.getElementById('displayCourse').textContent = state.course; document.getElementById('displayHours').textContent = state.hours;
-            document.getElementById('displayDay').textContent = state.day; document.getElementById('displayMonth').textContent = state.month; document.getElementById('displayYear').textContent = state.year;
-
-            const valEl = document.getElementById('displayValidity');
-            if (state.validityType === 'ocultar') valEl.style.display = 'none';
-            else if (state.validityType === 'no caduca') { valEl.style.display = 'block'; valEl.textContent = '( vigencia indefinida )'; }
-            else { valEl.style.display = 'block'; valEl.textContent = `( vigencia ${state.validityYears} ${state.validityYears == 1 ? 'año' : 'años'} )`; }
-
-            document.getElementById('displayEmail').textContent = state.email; document.getElementById('footerEmailItem').style.display = state.email ? 'flex' : 'none';
-            document.getElementById('displayAddress').textContent = state.address; document.getElementById('footerAddressItem').style.display = state.address ? 'flex' : 'none';
-            document.getElementById('displayPhone').textContent = state.phone; document.getElementById('footerPhoneItem').style.display = state.phone ? 'flex' : 'none';
-            document.getElementById('displayWebsite').textContent = state.website; document.getElementById('footerWebsiteItem').style.display = state.website ? 'flex' : 'none';
-
-            window.renderWatermark(); window.renderQRBox();
-        };
-
-        function bindAdminEvents() {
-            const map = { inputName:'name', inputId:'id', inputCourse:'course', inputHours:'hours', inputDay:'day', inputMonth:'month', inputYear:'year', inputValidityType:'validityType', inputValidityYears:'validityYears', inputEmail:'email', inputAddress:'address', inputPhone:'phone', inputWebsite:'website', inputWatermarkMode:'watermarkMode', inputWatermarkOpacity:'watermarkOpacity', inputQrSize:'qrSize', inputQrX:'qrX', inputQrY:'qrY' };
-            Object.keys(map).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener('input', e => { state[map[id]] = e.target.value; updateDisplay(); });
-            });
-
-            const upQR = document.getElementById('uploadQR');
-            if (upQR) upQR.addEventListener('change', e => {
-                if (e.target.files[0]) compressImageFile(e.target.files[0], 450, base64 => { state.qrImage = base64; window.renderQRBox(); });
-            });
-
-            const searchDB = document.getElementById('searchDBInput');
-            if (searchDB) searchDB.addEventListener('input', e => window.renderDBList(e.target.value));
-        }
-
-        function compressImageFile(file, maxSize, callback) {
-            const reader = new FileReader();
-            reader.onload = ev => {
+            const tryLoadCORS = (index) => {
+                if (index >= candidateUrls.length) return;
+                const currentUrl = candidateUrls[index];
                 const img = new Image();
+                img.crossOrigin = "anonymous";
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    if (w > maxSize || h > maxSize) { if (w > h) { h *= maxSize/w; w = maxSize; } else { w *= maxSize/h; h = maxSize; } }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    callback(canvas.toDataURL('image/png'));
+                    try {
+                        const w = img.naturalWidth || img.width;
+                        const h = img.naturalHeight || img.height;
+                        if (!w || !h) {
+                            tryLoadCORS(index + 1);
+                            return;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        const imgData = ctx.getImageData(0, 0, w, h);
+                        const data = imgData.data;
+
+                        for (let y = 0; y < h; y++) {
+                            for (let x = 0; x < w; x++) {
+                                const idx = (y * w + x) * 4;
+                                const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+                                if (r > 245 && g > 245 && b > 245) {
+                                    data[idx + 3] = 0;
+                                }
+                            }
+                        }
+
+                        ctx.putImageData(imgData, 0, 0);
+                        state.watermarkProcessedSrc = canvas.toDataURL('image/png');
+                        updateDisplay();
+                    } catch (e) {
+                        tryLoadCORS(index + 1);
+                    }
                 };
-                img.src = ev.target.result;
+                img.onerror = () => tryLoadCORS(index + 1);
+                img.src = currentUrl;
             };
-            reader.readAsDataURL(file);
-        }
 
-        // --- SISTEMA DE GUARDADO CON PROTECCIÓN ANTI-CONGELAMIENTO ---
-        window.saveSignatureConfig = async function() {
-            if (!isAdminAuthenticated) return;
-            const btn = document.getElementById('btnSaveSigns');
-            if(!btn) return;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'GUARDANDO...';
-            btn.disabled = true;
-
-            try {
-                // Objeto limpio garantizando que no hay valores undefined
-                const payload = {
-                    email: state.email || '', address: state.address || '', phone: state.phone || '', website: state.website || '',
-                    watermarkMode: state.watermarkMode || 'grid', watermarkOpacity: Number(state.watermarkOpacity) || 5,
-                    qrImage: state.qrImage || '', qrSize: Number(state.qrSize) || 100, qrX: Number(state.qrX) || 0, qrY: Number(state.qrY) || 0
-                };
-                await saveFirestoreSafe("configuracion", "firmas", payload);
-                await window.showNotice("¡Configuración guardada exitosamente!\nLos datos de contacto, marca de agua y el QR configurado se cargarán por defecto.");
-            } catch (error) {
-                console.error("Error al guardar:", error);
-                await window.showNotice("No se pudo guardar la configuración. Revisa tu conexión a internet o intenta nuevamente.");
-            } finally {
-                const btnRecover = document.getElementById('btnSaveSigns');
-                if(btnRecover) { btnRecover.innerHTML = originalText; btnRecover.disabled = false; }
-            }
+            tryLoadCORS(0);
         };
 
         window.loadSignatureConfig = async function() {
             try {
-                const snap = await getFirestoreSafe("configuracion", "firmas");
-                if (snap && snap.exists()) {
-                    const data = snap.data();
-                    ['email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity', 'qrImage', 'qrSize', 'qrX', 'qrY'].forEach(k => {
-                        if (data[k] !== undefined && data[k] !== null) state[k] = data[k];
+                const docSnap = await getDoc(doc(db, "configuracion", "firmas"));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const configKeys = [
+                        'sign1Name', 'sign1Role', 'sign1Size', 'sign1X', 'sign1Y', 'sign1Image',
+                        'sign2Name', 'sign2Role', 'sign2Size', 'sign2X', 'sign2Y', 'sign2Image',
+                        'email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity'
+                    ];
+                    configKeys.forEach(k => {
+                        if (data[k] !== undefined) state[k] = data[k];
                     });
+                    
+                    [1, 2].forEach(n => {
+                        if(state[`sign${n}Image`]) {
+                            document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${state[`sign${n}Image`]}" alt="Firma" style="max-width: 100%; height: 100%; object-fit: contain; object-position: bottom;" class="mb-0 relative z-10" />`;
+                        }
+                    });
+
+                    window.renderQRBox();
+                    window.renderWatermark();
                     updateDisplay();
                 }
-            } catch (error) { console.warn("Error cargando config:", error); }
+            } catch (error) {
+                console.error("Error cargando configuración guardada:", error);
+            }
         };
 
-        // --- BASE DE DATOS Y CERTIFICADOS ---
         window.saveToDB = async function(studentName, studentId) {
-            if (!isAdminAuthenticated || !studentName || !studentId) return;
-            const isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
-            const expYear = parseInt(state.year) + parseInt(state.validityYears || 0);
-            const safeCourse = (state.course || 'CURSO').replace(/[^a-zA-Z0-9]/g, '');
+            if(!studentName || !studentId) return;
+            
+            let isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
+            let expYear = parseInt(state.year) + parseInt(state.validityYears);
+            
+            const safeCourse = (state.course || 'SIN_CURSO').replace(/[^a-zA-Z0-9]/g, '');
             const docId = `${String(studentId).trim()}_${safeCourse}`;
 
-            const existingRecord = state.dbRecords.find(r => r.docId === docId);
-            const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
+            try {
+                const existingRecord = state.dbRecords.find(r => r.docId === docId);
+                const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
 
-            const payload = {
-                id: String(studentId).trim(), name: String(studentName).trim().toUpperCase(), course: String(state.course).trim().toUpperCase(),
-                hours: String(state.hours), day: String(state.day), month: String(state.month), year: String(state.year),
-                validityType: state.validityType, validityYears: String(state.validityYears), expYear: isIndefinite ? 9999 : expYear, isIndefinite: isIndefinite,
-                qrImage: state.qrImage || '', qrSize: Number(state.qrSize) || 100, qrX: Number(state.qrX) || 0, qrY: Number(state.qrY) || 0, dateAdded: dateAdded
-            };
-            await saveFirestoreSafe("certificados", docId, payload);
+                await setDoc(doc(db, "certificados", docId), {
+                    id: String(studentId).trim(),
+                    name: String(studentName).trim().toUpperCase(),
+                    course: String(state.course || '').trim().toUpperCase(),
+                    hours: String(state.hours ?? ''),
+                    day: String(state.day ?? ''),
+                    month: String(state.month ?? ''),
+                    year: String(state.year ?? ''),
+                    validityType: state.validityType || 'aplica',
+                    validityYears: String(state.validityYears ?? '2'),
+                    qrImage: state.qrImage || '',
+                    qrSize: Number(state.qrSize || 100),
+                    qrX: Number(state.qrX || 0),
+                    qrY: Number(state.qrY || 0),
+                    sign1Name: state.sign1Name || '',
+                    sign1Role: state.sign1Role || '',
+                    sign1Size: Number(state.sign1Size || 100),
+                    sign1X: Number(state.sign1X || 0),
+                    sign1Y: Number(state.sign1Y || 0),
+                    sign1Image: state.sign1Image || '',
+                    sign2Name: state.sign2Name || '',
+                    sign2Role: state.sign2Role || '',
+                    sign2Size: Number(state.sign2Size || 100),
+                    sign2X: Number(state.sign2X || 0),
+                    sign2Y: Number(state.sign2Y || 0),
+                    sign2Image: state.sign2Image || '',
+                    email: state.email || '',
+                    address: state.address || '',
+                    phone: state.phone || '',
+                    website: state.website || '',
+                    watermarkMode: state.watermarkMode || 'grid',
+                    watermarkOpacity: Number(state.watermarkOpacity ?? 10),
+                    expYear: isIndefinite ? 9999 : expYear,
+                    isIndefinite: isIndefinite,
+                    dateAdded: dateAdded
+                });
+            } catch (error) {
+                console.error("Error al guardar en Firebase:", error);
+                throw error;
+            }
         };
 
         window.loadDBRecords = async function() {
+            const container = document.getElementById('dbRecordsList');
+            
             try {
-                const snap = await getCollectionSafe("certificados");
-                const records = [];
-                snap.forEach(d => records.push({ docId: d.id, ...d.data() }));
-                records.sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || ''));
-                state.dbRecords = records;
-                window.renderDBList(document.getElementById('searchDBInput')?.value || '');
-            } catch (error) { console.warn("Error listando certificados"); }
+                const querySnapshot = await getDocs(collection(db, "certificados"));
+                state.dbRecords = [];
+                querySnapshot.forEach((doc) => {
+                    state.dbRecords.push({ docId: doc.id, ...doc.data() });
+                });
+                state.dbRecords.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+                
+                const currentSearch = document.getElementById('searchDBInput')?.value || '';
+                window.renderDBList(currentSearch);
+            } catch (error) {
+                console.error("Error cargando BD:", error);
+                if(container) container.innerHTML = `<p class="text-xs text-red-500 text-center py-2">Error cargando datos.</p>`;
+            }
         };
 
         window.renderDBList = function(searchTerm = '') {
-            const container = document.getElementById('dbListContainer');
-            const badge = document.getElementById('dbCountBadge');
-            if (!container || !badge) return;
-            badge.textContent = state.dbRecords.length;
-            const term = searchTerm.trim().toLowerCase();
-            const filtered = state.dbRecords.filter(r => (r.name||'').toLowerCase().includes(term) || (r.id||'').toLowerCase().includes(term) || (r.course||'').toLowerCase().includes(term));
+            const container = document.getElementById('dbRecordsList');
+            if(!container) return;
+            
+            const term = searchTerm.toLowerCase().trim();
+            
+            if (term === '') {
+                container.innerHTML = '';
+                return;
+            }
 
-            if (filtered.length === 0) { container.innerHTML = `<p class="text-[10px] text-gray-400 text-center py-4">No hay registros.</p>`; return; }
+            const filtered = state.dbRecords.filter(r => 
+                (r.name && r.name.toLowerCase().includes(term)) || 
+                (r.id && r.id.toLowerCase().includes(term)) ||
+                (r.course && r.course.toLowerCase().includes(term))
+            );
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<p class="text-[10px] text-gray-500 text-center py-2">No se encontraron registros.</p>`;
+                return;
+            }
 
             const grouped = {};
             filtered.forEach(r => {
-                const k = r.id || 'N/A';
-                if (!grouped[k]) grouped[k] = { id: r.id, name: r.name, firstDocId: r.docId, courses: [] };
-                grouped[k].courses.push(r);
+                const key = r.id;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        name: r.name,
+                        id: r.id,
+                        courses: []
+                    };
+                }
+                grouped[key].courses.push(r);
             });
 
-            container.innerHTML = Object.values(grouped).map(u => `
-                <div class="bg-gray-50 p-2 rounded border border-gray-200">
-                    <div class="flex justify-between items-center cursor-pointer hover:bg-gray-200 p-1 -mx-1 -mt-1 rounded transition-colors group" onclick="fillUserData('${u.firstDocId}')">
-                        <div class="overflow-hidden pr-1"><p class="text-[10px] font-bold text-gray-800 truncate">${u.name}</p><p class="text-[9px] text-gray-500 font-semibold truncate">C.C. ${u.id} (${u.courses.length} curso)</p></div>
-                        <span class="text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded shrink-0 group-hover:bg-blue-100">+ Curso</span>
+            container.innerHTML = Object.values(grouped).map(user => {
+                const latestDocId = user.courses[0].docId;
+                return `
+                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                    <div class="flex justify-between items-center cursor-pointer hover:bg-blue-50 p-1.5 rounded transition-colors group" onclick="previewCertificate('${latestDocId}')" title="Clic para cargar todos los datos guardados del estudiante">
+                        <div class="overflow-hidden pr-2 flex-1">
+                            <p class="text-[11px] font-bold text-gray-800 group-hover:text-blue-700 truncate m-0" title="${user.name}">${user.name}</p>
+                            <p class="text-[9px] text-gray-500 font-semibold truncate m-0">C.C. ${user.id} <span class="text-gray-400 font-normal">(${user.courses.length} curso${user.courses.length > 1 ? 's' : ''})</span></p>
+                        </div>
+                        <button onclick="event.stopPropagation(); fillUserDataForNewCourse('${latestDocId}')" class="text-[9px] bg-white border border-gray-300 text-gray-700 font-semibold px-2 py-1 rounded shadow-sm shrink-0" title="Cargar datos del alumno para añadir otro curso nuevo">
+                            + Curso
+                        </button>
                     </div>
-                    <div class="mt-1 space-y-1">
-                        ${u.courses.map(c => `
-                            <div class="flex justify-between items-center text-[9px] text-gray-700 bg-white border border-gray-200 p-1 rounded group/c hover:border-blue-400 cursor-pointer" onclick="loadFullRecord('${c.docId}')">
-                                <span class="truncate pr-1 flex-1 font-semibold group-hover/c:text-blue-600">📘 ${c.course||'Sin nombre'} ${c.qrImage ? '<span class="text-[7px] bg-green-100 text-green-700 px-1 rounded ml-1">QR</span>' : ''}</span>
+                    <div class="mt-2 space-y-1">
+                        ${user.courses.map(c => `
+                            <div class="flex justify-between items-center text-[9px] text-gray-600 bg-white border border-gray-200 p-1.5 rounded">
+                                <span class="truncate pr-2 flex-1 cursor-pointer font-medium flex items-center gap-1" title="Cargar todos los datos y QR de este certificado" onclick="previewCertificate('${c.docId}')">
+                                    <span>📘 ${c.course}</span>
+                                    ${c.qrImage ? `<span class="bg-green-100 text-green-700 border border-green-200 px-1 rounded text-[8px] font-bold shrink-0">QR</span>` : ''}
+                                </span>
+                                <button onclick="deleteRecord('${c.docId}')" class="text-gray-400 hover:text-red-600 shrink-0 ml-1" title="Eliminar este curso específico">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
                             </div>
                         `).join('')}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         };
 
-        window.loadFullRecord = function(docId) {
-            const r = state.dbRecords.find(x => x.docId === docId);
-            if (!r) return;
-            ['name','id','course','hours','day','month','year','validityType','validityYears','qrImage','qrSize','qrX','qrY'].forEach(k => { if(r[k] !== undefined) state[k] = r[k]; });
-            updateDisplay(); document.getElementById('sidebar')?.scrollTo({top:0, behavior:'smooth'});
+        window.resetStudentForm = function() {
+            state.name = '';
+            state.id = '';
+            state.course = '';
+            state.qrImage = '';
+            state.qrSize = 100;
+            state.qrX = 0;
+            state.qrY = 0;
+            const qrInput = document.getElementById('uploadQR');
+            if (qrInput) qrInput.value = '';
+            window.renderQRBox();
+            updateDisplay();
         };
 
-        window.fillUserData = async function(docId) {
-            const r = state.dbRecords.find(x => x.docId === docId);
-            if (!r) return;
-            state.name = r.name || ''; state.id = r.id || ''; state.course = '';
-            await window.loadSignatureConfig(); updateDisplay(); document.getElementById('sidebar')?.scrollTo({top:0, behavior:'smooth'});
+        window.fillUserDataForNewCourse = function(docId) {
+            const record = state.dbRecords.find(r => r.docId === docId);
+            if (!record) return;
+
+            state.name = record.name || '';
+            state.id = record.id || '';
+            state.course = '';
+            state.qrImage = '';
+            const qrInput = document.getElementById('uploadQR');
+            if (qrInput) qrInput.value = '';
+
+            window.renderQRBox();
+            updateDisplay();
+            document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
+            
+            const inputNameEl = document.getElementById('inputName');
+            const inputIdEl = document.getElementById('inputId');
+            const inputCourseEl = document.getElementById('inputCourse');
+            inputNameEl.classList.add('bg-green-100');
+            inputIdEl.classList.add('bg-green-100');
+            inputCourseEl.focus();
+            setTimeout(() => {
+                inputNameEl.classList.remove('bg-green-100');
+                inputIdEl.classList.remove('bg-green-100');
+            }, 600);
         };
 
-        window.resetStudentForm = async function() {
-            state.name = ''; state.id = ''; state.course = '';
-            await window.loadSignatureConfig(); updateDisplay();
+        window.previewCertificate = function(docId) {
+            const record = state.dbRecords.find(r => r.docId === docId);
+            if (!record) return;
+
+            state.name = record.name ?? '';
+            state.id = record.id ?? '';
+            state.course = record.course ?? '';
+            if (record.hours !== undefined && record.hours !== '') state.hours = record.hours;
+            if (record.day !== undefined && record.day !== '') state.day = record.day;
+            if (record.month !== undefined && record.month !== '') state.month = record.month;
+            if (record.year !== undefined && record.year !== '') state.year = record.year;
+            if (record.validityType !== undefined && record.validityType !== '') state.validityType = record.validityType;
+            if (record.validityYears !== undefined && record.validityYears !== '') state.validityYears = record.validityYears;
+
+            state.qrImage = record.qrImage || '';
+            state.qrSize = record.qrSize !== undefined ? record.qrSize : 100;
+            state.qrX = record.qrX !== undefined ? record.qrX : 0;
+            state.qrY = record.qrY !== undefined ? record.qrY : 0;
+            const qrInput = document.getElementById('uploadQR');
+            if (qrInput) qrInput.value = '';
+
+            if (record.sign1Name !== undefined && record.sign1Name !== '') state.sign1Name = record.sign1Name;
+            if (record.sign1Role !== undefined && record.sign1Role !== '') state.sign1Role = record.sign1Role;
+            if (record.sign1Size !== undefined) state.sign1Size = record.sign1Size;
+            if (record.sign1X !== undefined) state.sign1X = record.sign1X;
+            if (record.sign1Y !== undefined) state.sign1Y = record.sign1Y;
+            if (record.sign1Image) {
+                state.sign1Image = record.sign1Image;
+                document.getElementById('sign1ImageContainer').innerHTML = `<img src="${state.sign1Image}" alt="Firma" style="max-width: 100%; height: 100%; object-fit: contain; object-position: bottom;" class="mb-0 relative z-10" />`;
+            }
+
+            if (record.sign2Name !== undefined && record.sign2Name !== '') state.sign2Name = record.sign2Name;
+            if (record.sign2Role !== undefined && record.sign2Role !== '') state.sign2Role = record.sign2Role;
+            if (record.sign2Size !== undefined) state.sign2Size = record.sign2Size;
+            if (record.sign2X !== undefined) state.sign2X = record.sign2X;
+            if (record.sign2Y !== undefined) state.sign2Y = record.sign2Y;
+            if (record.sign2Image) {
+                state.sign2Image = record.sign2Image;
+                document.getElementById('sign2ImageContainer').innerHTML = `<img src="${state.sign2Image}" alt="Firma" style="max-width: 100%; height: 100%; object-fit: contain; object-position: bottom;" class="mb-0 relative z-10" />`;
+            }
+
+            if (record.email !== undefined && record.email !== '') state.email = record.email;
+            if (record.address !== undefined && record.address !== '') state.address = record.address;
+            if (record.phone !== undefined && record.phone !== '') state.phone = record.phone;
+            if (record.website !== undefined) state.website = record.website;
+            if (record.watermarkMode !== undefined) state.watermarkMode = record.watermarkMode;
+            if (record.watermarkOpacity !== undefined) state.watermarkOpacity = record.watermarkOpacity;
+
+            window.renderQRBox();
+            window.renderWatermark();
+            updateDisplay();
+            
+            document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
+            
+            const highlightIds = ['inputName', 'inputId', 'inputCourse', 'inputHours', 'inputDay', 'inputMonth', 'inputYear', 'inputValidityType', 'inputValidityYears'];
+            highlightIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('bg-blue-100');
+            });
+            setTimeout(() => {
+                highlightIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('bg-blue-100');
+                });
+            }, 600);
         };
 
-        async function checkDuplicate() {
-            const safeCourse = (state.course||'CURSO').replace(/[^a-zA-Z0-9]/g, '');
-            const docId = `${String(state.id).trim()}_${safeCourse}`;
-            if(state.dbRecords.some(r => r.docId === docId)) return await window.showConfirm("Este curso ya está registrado.\n¿Deseas actualizar el registro existente con los datos actuales?");
-            return true;
+        window.deleteRecord = async function(docId) {
+            const confirmed = await window.showConfirm("¿Estás seguro de que deseas eliminar este certificado de la base de datos?\n\nEsta acción no se puede deshacer y el estudiante ya no podrá verificarlo.");
+            if(!confirmed) return;
+            try {
+                await deleteDoc(doc(db, "certificados", docId));
+                await window.loadDBRecords();
+            } catch(error) {
+                console.error("Error eliminando documento:", error);
+                await window.showNotice("Error al eliminar el registro. Revisa la conexión.");
+            }
+        };
+
+        window.verifiedCertificates = [];
+
+        document.getElementById('verifyForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const idToSearch = document.getElementById('verifyIdInput').value.trim();
+            const container = document.getElementById('verifyResultsContainer');
+            
+            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">Buscando en la base de datos...</p>`;
+            container.classList.remove('hidden');
+
+            try {
+                const q = query(collection(db, "certificados"), where("id", "==", idToSearch));
+                const querySnapshot = await getDocs(q);
+
+                if(!querySnapshot.empty) {
+                    let results = [];
+                    querySnapshot.forEach((doc) => results.push(doc.data()));
+                    window.verifiedCertificates = results;
+
+                    let html = `
+                        <div class="mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 leading-tight m-0">${results[0].name}</h3>
+                            <p class="text-xs font-semibold text-gray-500 mt-1 mb-0">C.C. ${results[0].id}</p>
+                        </div>
+                        <div class="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                    `;
+                    
+                    const currentYear = new Date().getFullYear();
+                    
+                    results.forEach((cert, index) => {
+                        let isActive = cert.isIndefinite || currentYear <= cert.expYear;
+                        let badge = isActive ? 
+                            `<span class="bg-green-100 text-green-800 border border-green-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Activo</span>` : 
+                            `<span class="bg-red-100 text-red-800 border border-red-200 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">Vencido</span>`;
+                        
+                        html += `
+                            <div class="bg-gray-50 p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                <p class="text-xs font-bold text-gray-800 leading-tight m-0">${cert.course}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] text-gray-500">Válido hasta: ${cert.isIndefinite ? 'Sin caducidad' : cert.expYear}</span>
+                                    ${badge}
+                                </div>
+                                <button type="button" onclick="downloadVerifiedPDF(${index})" class="w-full mt-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition-colors shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    <span>Descargar Certificado PDF</span>
+                                </button>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    container.innerHTML = html;
+                } else {
+                    window.verifiedCertificates = [];
+                    container.innerHTML = `
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-red-500 mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <p class="text-sm font-bold text-red-800 m-0">No se encontraron registros</p>
+                            <p class="text-xs text-red-600 mt-1 mb-0">Verifique el número de cédula ingresado.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error conectando a Firebase:", error);
+                container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Error de conexión con la base de datos.</p>`;
+            }
+        });
+
+        window.downloadVerifiedPDF = async function(index) {
+            const record = window.verifiedCertificates[index];
+            if (!record) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            loadText.textContent = "Preparando y descargando tu certificado en PDF...";
+            overlay.classList.remove('hidden');
+
+            const mainAppEl = document.getElementById('mainApp');
+            const wasMainAppHidden = mainAppEl.classList.contains('hidden');
+
+            try {
+                await window.loadSignatureConfig();
+
+                state.name = record.name ?? '';
+                state.id = record.id ?? '';
+                state.course = record.course ?? '';
+                if (record.hours !== undefined && record.hours !== '') state.hours = record.hours;
+                if (record.day !== undefined && record.day !== '') state.day = record.day;
+                if (record.month !== undefined && record.month !== '') state.month = record.month;
+                if (record.year !== undefined && record.year !== '') state.year = record.year;
+                if (record.validityType !== undefined && record.validityType !== '') state.validityType = record.validityType;
+                if (record.validityYears !== undefined && record.validityYears !== '') state.validityYears = record.validityYears;
+
+                state.qrImage = record.qrImage || '';
+                state.qrSize = record.qrSize !== undefined ? record.qrSize : 100;
+                state.qrX = record.qrX !== undefined ? record.qrX : 0;
+                state.qrY = record.qrY !== undefined ? record.qrY : 0;
+
+                if (record.sign1Name !== undefined && record.sign1Name !== '') state.sign1Name = record.sign1Name;
+                if (record.sign1Role !== undefined && record.sign1Role !== '') state.sign1Role = record.sign1Role;
+                if (record.sign1Size !== undefined) state.sign1Size = record.sign1Size;
+                if (record.sign1X !== undefined) state.sign1X = record.sign1X;
+                if (record.sign1Y !== undefined) state.sign1Y = record.sign1Y;
+                if (record.sign1Image) {
+                    state.sign1Image = record.sign1Image;
+                    document.getElementById('sign1ImageContainer').innerHTML = `<img src="${state.sign1Image}" alt="Firma" style="max-width: 100%; height: 100%; object-fit: contain; object-position: bottom;" class="mb-0 relative z-10" />`;
+                }
+
+                if (record.sign2Name !== undefined && record.sign2Role !== '') state.sign2Name = record.sign2Name;
+                if (record.sign2Role !== undefined && record.sign2Role !== '') state.sign2Role = record.sign2Role;
+                if (record.sign2Size !== undefined) state.sign2Size = record.sign2Size;
+                if (record.sign2X !== undefined) state.sign2X = record.sign2X;
+                if (record.sign2Y !== undefined) state.sign2Y = record.sign2Y;
+                if (record.sign2Image) {
+                    state.sign2Image = record.sign2Image;
+                    document.getElementById('sign2ImageContainer').innerHTML = `<img src="${state.sign2Image}" alt="Firma" style="max-width: 100%; height: 100%; object-fit: contain; object-position: bottom;" class="mb-0 relative z-10" />`;
+                }
+
+                if (record.email !== undefined && record.email !== '') state.email = record.email;
+                if (record.address !== undefined && record.address !== '') state.address = record.address;
+                if (record.phone !== undefined && record.phone !== '') state.phone = record.phone;
+                if (record.website !== undefined) state.website = record.website;
+                if (record.watermarkMode !== undefined) state.watermarkMode = record.watermarkMode;
+                if (record.watermarkOpacity !== undefined) state.watermarkOpacity = record.watermarkOpacity;
+
+                window.renderQRBox();
+                window.renderWatermark();
+                updateDisplay();
+
+                if (wasMainAppHidden) {
+                    mainAppEl.classList.remove('hidden');
+                    mainAppEl.classList.add('flex');
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 150));
+
+                const pdf = await createCertificatePDF();
+                const safeName = String(state.name || 'ESTUDIANTE').replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                const safeCourse = String(state.course || 'CURSO').replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                pdf.save(`CERTIFICADO_${safeName}_${safeCourse}.pdf`);
+            } catch (error) {
+                console.error("Error descargando certificado verificado:", error);
+                await window.showNotice("Hubo un error al generar la descarga del certificado.");
+            } finally {
+                if (wasMainAppHidden) {
+                    mainAppEl.classList.add('hidden');
+                    mainAppEl.classList.remove('flex');
+                }
+                overlay.classList.add('hidden');
+            }
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            if(document.getElementById('loginPass').value === 'A7f9K2mX8Q4zT1B') {
+                document.getElementById('loginError').classList.add('hidden');
+                sessionStorage.setItem('funetec_auth', 'true');
+                window.showScreen('mainApp');
+                document.getElementById('loginPass').value = ''; 
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        function updateDisplay() {
+            const fields = ['Name', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone', 'Website'];
+            fields.forEach(f => {
+                const k = f.charAt(0).toLowerCase() + f.slice(1);
+                if(document.getElementById('display'+f)) document.getElementById('display'+f).textContent = state[k];
+                if(document.getElementById('input'+f)) document.getElementById('input'+f).value = state[k];
+            });
+
+            const webContainer = document.getElementById('websiteContainer');
+            if (webContainer) {
+                webContainer.style.display = (state.website && state.website.trim() !== '') ? 'flex' : 'none';
+            }
+
+            const valContainer = document.getElementById('validityContainer');
+            const inputValYears = document.getElementById('inputValidityYears');
+            
+            if (state.validityType === 'ocultar') {
+                if (valContainer) valContainer.style.display = 'none';
+                if (inputValYears) inputValYears.classList.add('hidden');
+            } else {
+                if (valContainer) {
+                    valContainer.style.display = 'block';
+                    if (state.validityType === 'aplica') {
+                        if (inputValYears) inputValYears.classList.remove('hidden');
+                        document.getElementById('displayValidity').textContent = `vigencia ${state.validityYears} año${state.validityYears == 1 ? '' : 's'}`;
+                    } else {
+                        if (inputValYears) inputValYears.classList.add('hidden');
+                        document.getElementById('displayValidity').textContent = state.validityType;
+                    }
+                }
+            }
+            if(document.getElementById('inputValidityType')) document.getElementById('inputValidityType').value = state.validityType;
+            if(inputValYears) inputValYears.value = state.validityYears;
+
+            [1, 2].forEach(n => {
+                const el = document.getElementById(`sign${n}ImageContainer`).firstElementChild;
+                if(el) {
+                    el.style.transformOrigin = 'bottom center';
+                    el.style.transform = `translate(${state[`sign${n}X`]}px, ${state[`sign${n}Y`]}px) scale(${state[`sign${n}Size`]/100})`;
+                }
+                ['Size', 'X', 'Y'].forEach(p => document.getElementById(`inputSign${n}${p}`).value = state[`sign${n}${p}`]);
+            });
+
+            window.renderQRBox();
+            ['Size', 'X', 'Y'].forEach(p => {
+                const inp = document.getElementById(`inputQr${p}`);
+                if(inp) inp.value = state[`qr${p}`];
+            });
+
+            const wmModeEl = document.getElementById('inputWatermarkMode');
+            if (wmModeEl) wmModeEl.value = state.watermarkMode || 'grid';
+            const wmOpEl = document.getElementById('inputWatermarkOpacity');
+            if (wmOpEl) wmOpEl.value = state.watermarkOpacity ?? 10;
+            window.renderWatermark();
         }
 
+        document.querySelectorAll('input, textarea, select').forEach(inp => {
+            if(inp.type !== 'file' && inp.id !== 'verifyIdInput' && inp.id !== 'loginPass' && inp.id !== 'searchDBInput') {
+                inp.addEventListener('input', e => { state[e.target.name] = e.target.value; updateDisplay(); });
+            }
+        });
+
+        document.getElementById('uploadQR').addEventListener('change', e => {
+            if(e.target.files[0]) {
+                const r = new FileReader();
+                r.onload = ev => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 400;
+                        if (width > MAX_SIZE || height > MAX_SIZE) {
+                            if (width > height) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            } else {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        state.qrImage = canvas.toDataURL('image/png');
+                        window.renderQRBox();
+                        updateDisplay();
+                    };
+                    img.src = ev.target.result;
+                };
+                r.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        window.clearQR = function() {
+            state.qrImage = '';
+            document.getElementById('uploadQR').value = '';
+            window.renderQRBox();
+            updateDisplay();
+        };
+
+        [1, 2].forEach(n => {
+            document.getElementById(`uploadSign${n}`).addEventListener('change', e => {
+                if(e.target.files[0]) {
+                    const r = new FileReader();
+                    r.onload = ev => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const MAX_SIZE = 400; 
+                            if (width > MAX_SIZE || height > MAX_SIZE) {
+                                if (width > height) {
+                                    height *= MAX_SIZE / width;
+                                    width = MAX_SIZE;
+                                } else {
+                                    width *= MAX_SIZE / height;
+                                    height = MAX_SIZE;
+                                }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            const compressedBase64 = canvas.toDataURL('image/png');
+                            state[`sign${n}Image`] = compressedBase64;
+                            document.getElementById(`sign${n}ImageContainer`).innerHTML = `<img src="${compressedBase64}" alt="Firma" style="max-width: 100%; height: 100%; object-fit: contain; object-position: bottom;" class="mb-0 relative z-10" />`;
+                            updateDisplay();
+                        };
+                        img.src = ev.target.result;
+                    };
+                    r.readAsDataURL(e.target.files[0]);
+                }
+            });
+        });
+
+        async function createCertificatePDF() {
+            const { jsPDF } = window.jspdf;
+            const docContainer = document.getElementById('documentContainer');
+            const scaleWrapper = document.getElementById('documentScaleWrapper');
+            const originalTransform = scaleWrapper.style.transform;
+            const originalTop = scaleWrapper.style.top;
+            const originalLeft = scaleWrapper.style.left;
+
+            scaleWrapper.style.transform = 'none';
+            scaleWrapper.style.top = '0px';
+            scaleWrapper.style.left = '0px';
+            window.renderQRBox();
+
+            const allImages = docContainer.querySelectorAll('img');
+            await Promise.all(Array.from(allImages).map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            }));
+            await new Promise(resolve => setTimeout(resolve, 80));
+
+            try {
+                const canvas = await window.html2canvas(docContainer, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: 1056,
+                    height: 816
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [1056, 816]
+                });
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
+                return pdf;
+            } finally {
+                scaleWrapper.style.top = originalTop;
+                scaleWrapper.style.left = originalLeft;
+                scaleWrapper.style.transform = originalTransform;
+            }
+        }
+
+        window.downloadIndividualPDF = async function() {
+            if(!state.name || !state.id) {
+                await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de descargar el PDF.");
+                return;
+            }
+
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(state.id).trim()}_${safeCourse}`;
+
+            if(state.dbRecords.some(r => r.docId === docId)) {
+                const overwrite = await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas actualizar el registro con los datos/QR actuales y descargar el PDF?");
+                if(!overwrite) return;
+            }
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            loadText.textContent = "Generando PDF con código QR y guardando...";
+            overlay.classList.remove('hidden');
+
+            try {
+                await window.saveToDB(state.name, state.id);
+                await window.loadDBRecords();
+                const pdf = await createCertificatePDF();
+                const safeName = state.name.replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                pdf.save(`CERTIFICADO_${safeName}.pdf`);
+            } catch (error) {
+                console.error("Error generando PDF individual:", error);
+                await window.showNotice("Hubo un error al generar el PDF.");
+            } finally {
+                overlay.classList.add('hidden');
+            }
+        };
+
         window.saveIndividualOnly = async function() {
-            if(!state.name || !state.id || !state.course) { await window.showNotice("Faltan datos (Nombre, Cédula o Curso)."); return; }
-            if(!(await checkDuplicate())) return;
+            if(!state.name || !state.id) {
+                await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de guardar.");
+                return;
+            }
+
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(state.id).trim()}_${safeCourse}`;
+
+            if(state.dbRecords.some(r => r.docId === docId)) {
+                const overwrite = await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente con los datos actuales?");
+                if(!overwrite) return;
+            }
+
             await window.saveToDB(state.name, state.id);
             await window.loadDBRecords();
-            await window.showNotice("¡Certificado y QR guardados exitosamente!");
+            await window.showNotice("¡Certificado guardado exitosamente en la nube!");
         };
 
         window.printAndSaveIndividual = async function() {
-            if(!state.name || !state.id || !state.course) { await window.showNotice("Faltan datos (Nombre, Cédula o Curso)."); return; }
-            if(!(await checkDuplicate())) return;
+            if(!state.name || !state.id) {
+                await window.showNotice("Por favor ingrese el Nombre Completo y Cédula del estudiante antes de imprimir.");
+                return;
+            }
+
+            const safeCourse = state.course.replace(/[^a-zA-Z0-9]/g, '');
+            const docId = `${String(state.id).trim()}_${safeCourse}`;
+
+            if(state.dbRecords.some(r => r.docId === docId)) {
+                const overwrite = await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas sobreescribir/actualizar el registro existente e imprimir de todos modos?");
+                if(!overwrite) return;
+            }
+
             await window.saveToDB(state.name, state.id);
             await window.loadDBRecords();
             window.print();
         };
 
-        async function getPDFBlob() {
-            const el = document.getElementById('certificateElement');
-            const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 1056, height: 816 });
-            const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [1056, 816] });
-            pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1056, 816);
-            return pdf;
-        }
+        document.getElementById('uploadExcel').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        window.downloadIndividualPDF = async function() {
-            if(!state.name || !state.id || !state.course) { await window.showNotice("Faltan datos."); return; }
-            const overlay = document.getElementById('loadingOverlay'); overlay.style.display = 'flex';
-            try {
-                await window.saveToDB(state.name, state.id); await window.loadDBRecords();
-                const pdf = await getPDFBlob();
-                pdf.save(`Certificado_${state.name.replace(/[^a-zA-Z0-9]/g,'_')}_${state.id}.pdf`);
-            } catch (err) { await window.showNotice("Error generando PDF."); } finally { overlay.style.display = 'none'; }
-        };
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = window.XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                const rows = window.XLSX.utils.sheet_to_json(firstSheet, {header: 1}); 
+                if(rows.length === 0) {
+                    await window.showNotice("El archivo Excel está vacío.");
+                    return;
+                }
 
-        // --- VERIFICACIÓN PÚBLICA Y DESCARGA ---
-        window.verifyDocument = async function() {
-            const idInput = document.getElementById('verifyIdInput').value.trim();
-            const container = document.getElementById('verifyResultContainer');
-            if (!idInput) { container.innerHTML = `<p class="text-xs text-red-600 font-bold text-center">Ingrese un documento.</p>`; return; }
-            container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">Consultando...</p>`;
-            await window.loadDBRecords();
-            const matches = state.dbRecords.filter(r => String(r.id).trim() === idInput);
+                const headers = rows[0].map(h => String(h).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                const nameIdx = headers.findIndex(h => h.includes('nombre'));
+                const idIdx = headers.findIndex(h => h.includes('cedula') || h.includes('identificacion'));
+                const courseIdx = headers.findIndex(h => h.includes('curso'));
+
+                if(nameIdx === -1) {
+                    await window.showNotice("No se encontró la columna 'Nombre' en la primera fila del Excel.");
+                    return;
+                }
+
+                let duplicatesCount = 0;
+                const studentMap = new Map();
+
+                for(let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if(row[nameIdx]) {
+                        const name = String(row[nameIdx]).trim();
+                        const id = idIdx !== -1 && row[idIdx] ? String(row[idIdx]).trim() : '';
+                        const rowCourse = courseIdx !== -1 && row[courseIdx] ? String(row[courseIdx]).trim() : state.course;
+
+                        const uniqueKey = `${id}_${rowCourse}`;
+                        
+                        if (studentMap.has(uniqueKey)) {
+                            duplicatesCount++;
+                        } else {
+                            studentMap.set(uniqueKey, { name, id, course: rowCourse });
+                        }
+                    }
+                }
+
+                state.bulkStudents = Array.from(studentMap.values());
+
+                const idCounts = {};
+                state.bulkStudents.forEach(s => {
+                    if(s.id) idCounts[s.id] = (idCounts[s.id] || 0) + 1;
+                });
+                const multipleCoursesCount = Object.values(idCounts).filter(count => count > 1).length;
+
+                if(state.bulkStudents.length > 0) {
+                    const bulkContainer = document.getElementById('bulkButtonsContainer');
+                    bulkContainer.classList.remove('hidden');
+                    bulkContainer.classList.add('flex');
+                    
+                    let msg = `¡Éxito! Se detectaron ${state.bulkStudents.length} certificados listos para generar.`;
+                    if (duplicatesCount > 0) {
+                        msg += `\n\n- Omitimos ${duplicatesCount} registro(s) duplicado(s) (mismo alumno con el mismo curso).`;
+                    }
+                    if (multipleCoursesCount > 0) {
+                        msg += `\n- Tienes ${multipleCoursesCount} estudiante(s) con múltiples cursos distintos asignados correctamente.`;
+                    }
+                    
+                    await window.showNotice(msg);
+                } else {
+                    await window.showNotice("No se encontraron estudiantes válidos en el archivo.");
+                    document.getElementById('bulkButtonsContainer').classList.add('hidden');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        document.getElementById('btnBulkZip').addEventListener('click', async () => {
+            if(state.bulkStudents.length === 0) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            overlay.classList.remove('hidden');
+
+            const zip = new window.JSZip();
+            const originalName = state.name;
+            const originalId = state.id;
+            const originalCourse = state.course;
             
-            if (matches.length === 0) {
-                container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center"><p class="text-sm font-bold text-red-700">No encontrado</p></div>`; return;
+            try {
+                for(let i = 0; i < state.bulkStudents.length; i++) {
+                    const student = state.bulkStudents[i];
+                    loadText.textContent = `Generando PDF con QR y guardando Nube: ${i + 1} de ${state.bulkStudents.length}...`;
+
+                    state.name = student.name;
+                    state.id = student.id;
+                    state.course = student.course || originalCourse;
+                    updateDisplay();
+                    
+                    await window.saveToDB(student.name, student.id);
+
+                    const pdf = await createCertificatePDF();
+                    
+                    const safeName = student.name.replace(/[^a-z0-9]/gi, '_').toUpperCase();
+                    const randomSuffix = Math.floor(Math.random() * 1000); 
+                    zip.file(`CERTIFICADO_${safeName}_${randomSuffix}.pdf`, pdf.output('blob'));
+                }
+
+                loadText.textContent = "Comprimiendo archivo ZIP...";
+                const zipContent = await zip.generateAsync({type: "blob"});
+                window.saveAs(zipContent, "Certificados_FUNETEC.zip");
+
+            } catch(error) {
+                console.error(error);
+                await window.showNotice("Hubo un error generando los archivos. Verifica la consola.");
+            } finally {
+                state.name = originalName;
+                state.id = originalId;
+                state.course = originalCourse;
+                updateDisplay();
+                overlay.classList.add('hidden');
+                await window.loadDBRecords();
             }
-            container.innerHTML = `
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-2 text-center"><p class="text-xs font-bold text-emerald-800 uppercase">${matches[0].name}</p></div>
-                ${matches.map(m => {
-                    const isActive = m.isIndefinite || Number(m.expYear) >= new Date().getFullYear();
-                    return `<div class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
-                        <div class="flex justify-between items-start gap-2"><h4 class="text-[11px] font-extrabold text-gray-900 uppercase">${m.course}</h4>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${isActive?'bg-emerald-100 text-emerald-800':'bg-red-100 text-red-700'}">${isActive?'VIGENTE':'VENCIDO'}</span></div>
-                        <button onclick="downloadPublicVerifiedPDF('${m.docId}')" class="mt-1 w-full flex justify-center gap-2 bg-red-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow">Descargar PDF</button>
-                    </div>`;
-                }).join('')}
-            `;
-        };
+        });
 
-        window.downloadPublicVerifiedPDF = async function(docId) {
-            const record = state.dbRecords.find(r => r.docId === docId);
-            if (!record) return;
-            const overlay = document.getElementById('loadingOverlay'); overlay.style.display = 'flex';
-            try {
-                await window.loadSignatureConfig(); window.loadFullRecord(docId); await new Promise(r => setTimeout(r, 250));
-                const pdf = await getPDFBlob(); pdf.save(`Certificado_${record.id}_${(record.course||'Curso').replace(/[^a-zA-Z0-9]/g,'_')}.pdf`);
-            } catch (err) { await window.showNotice("Error al generar PDF."); } finally { overlay.style.display = 'none'; }
-        };
+        document.getElementById('btnBulkCloud').addEventListener('click', async () => {
+            if(state.bulkStudents.length === 0) return;
 
-        // --- INICIALIZACIÓN ---
-        async function initApp() {
-            updateDisplay(); loadWatermarkBase64();
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            const originalCourse = state.course;
+            overlay.classList.remove('hidden');
+            
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
-            } catch(e) { console.warn("Error Auth", e); }
-            await window.loadSignatureConfig();
-        }
-        initApp();
+                for(let i = 0; i < state.bulkStudents.length; i++) {
+                    const student = state.bulkStudents[i];
+                    loadText.textContent = `Subiendo a la nube: ${i + 1} de ${state.bulkStudents.length}...`;
+                    
+                    state.course = student.course || originalCourse;
+                    await window.saveToDB(student.name, student.id);
+                }
+                await window.showNotice("¡Todos los certificados masivos se subieron exitosamente a la nube!");
+            } catch(error) {
+                console.error(error);
+                await window.showNotice("Hubo un error subiendo los archivos a la nube. Verifica la consola.");
+            } finally {
+                state.course = originalCourse;
+                overlay.classList.add('hidden');
+                await window.loadDBRecords();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => { 
+            window.initWatermark();
+            window.loadSignatureConfig();
+            if(sessionStorage.getItem('funetec_auth') === 'true') {
+                window.showScreen('mainApp');
+            } else {
+                window.showScreen('welcomeScreen');
+            }
+            updateDisplay(); 
+        });
     </script>
 </body>
 </html>
