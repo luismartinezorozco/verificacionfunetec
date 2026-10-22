@@ -9,7 +9,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Librerías para Generación de PDF, Excel Masivo y ZIP -->
+    <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -21,118 +21,55 @@
     <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* Estilos base y respaldo para todos los navegadores y bloqueadores */
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Montserrat', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
-        }
-        .hidden {
-            display: none !important;
-        }
-        .font-old-english {
-            font-family: 'UnifrakturMaguntia', cursive;
-        }
-        .font-serif-title {
-            font-family: 'Playfair Display', serif;
-        }
-        .font-sans-body {
-            font-family: 'Montserrat', sans-serif;
-        }
+        /* Estilos Integrados de Alta Prioridad */
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; background-color: #f3f4f6; color: #1f2937; }
+        .hidden { display: none !important; }
+        .font-old-english { font-family: 'UnifrakturMaguntia', cursive; }
+        .font-serif-title { font-family: 'Playfair Display', serif; }
+        .font-sans-body { font-family: 'Montserrat', sans-serif; }
 
-        /* Loader animado */
         .loader {
             border: 4px solid rgba(255, 255, 255, 0.2);
             border-left-color: #ef4444;
             border-radius: 50%;
-            width: 44px;
-            height: 44px;
+            width: 44px; height: 44px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Contenedor exacto tamaño Carta Horizontal */
+        /* Lienzo Fijo 1056x816 (Carta Horizontal) */
         #certificateElement {
-            width: 1056px;
-            height: 816px;
-            min-width: 1056px;
-            min-height: 816px;
+            width: 1056px; height: 816px;
+            min-width: 1056px; min-height: 816px;
             background-color: #ffffff;
             position: relative;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            display: flex; flex-direction: column; justify-content: space-between;
             padding: 36px 56px 28px 56px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
-        /* Modo oculto fuera de pantalla para descargas públicas sin mostrar el editor */
-        .offscreen-cert-mode {
-            position: fixed !important;
-            left: -9999px !important;
-            top: 0 !important;
-            width: 1056px !important;
-            height: 816px !important;
-            overflow: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            z-index: -50 !important;
-        }
-
-        /* Reglas de Impresión */
+        /* Reglas estandarizadas de Impresión */
         @media print {
-            @page {
-                size: letter landscape;
-                margin: 0;
-            }
-            body {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #ffffff !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-            #mainWorkspace {
-                padding: 0 !important;
-                margin: 0 !important;
-                background: #ffffff !important;
-            }
-            #previewWrapper {
-                padding: 0 !important;
-                margin: 0 !important;
-                background: #ffffff !important;
-                overflow: visible !important;
-            }
-            #certificateElement {
-                width: 100vw !important;
-                height: 100vh !important;
-                box-shadow: none !important;
-                transform: none !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+            @page { size: letter landscape; margin: 0; }
+            body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }
+            .no-print { display: none !important; }
+            #mainWorkspace { height: auto !important; overflow: visible !important; background: white !important; }
+            #previewWrapper { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
+            #certificateElement { width: 100vw !important; height: 100vh !important; box-shadow: none !important; transform: none !important; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
+<body class="bg-gray-100 min-h-screen text-gray-800">
 
-    <!-- MODAL DE AVISOS Y CONFIRMACIÓN (Reemplazo seguro de alert/confirm) -->
-    <div id="customModal" style="display: none; background-color: rgba(17, 24, 39, 0.75);" class="fixed inset-0 z-[200] flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100 text-center">
+    <!-- MODAL PRINCIPAL DE AVISOS Y ALERTAS (NO BORRAR: PREVIENE EL CONGELAMIENTO) -->
+    <div id="customModal" style="display: none; background-color: rgba(17, 24, 39, 0.85);" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 no-print backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100 text-center relative transform transition-all">
             <div id="customModalIcon" class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             </div>
-            <h3 id="customModalTitle" class="text-lg font-bold text-gray-900 mb-2">Aviso del Sistema</h3>
+            <h3 id="customModalTitle" class="text-lg font-bold text-gray-900 mb-2">Aviso</h3>
             <p id="customModalMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></p>
             <div id="customModalButtons" class="flex justify-center gap-3">
                 <button id="customModalCancel" class="hidden px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-100 transition-colors">Cancelar</button>
@@ -141,20 +78,19 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE CARGA DE PROCESO MASIVO / PDF -->
-    <div id="loadingOverlay" style="display: none; background-color: rgba(17, 24, 39, 0.85);" class="fixed inset-0 z-[150] flex flex-col items-center justify-center text-white no-print p-4 text-center">
+    <!-- PANTALLA DE CARGA GLOBAL -->
+    <div id="loadingOverlay" style="display: none; background-color: rgba(17, 24, 39, 0.85);" class="fixed inset-0 z-[9900] flex flex-col items-center justify-center text-white no-print p-4 text-center backdrop-blur-sm">
         <div class="loader mb-4"></div>
         <h2 id="loadingTitle" class="text-xl font-bold mb-2">Procesando...</h2>
-        <p id="loadingText" class="text-sm text-gray-300 max-w-md">Conectando con la base de datos en la nube. Por favor espera un momento.</p>
+        <p id="loadingText" class="text-sm text-gray-300 max-w-md">Por favor espera un momento.</p>
     </div>
 
-    <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
+    <!-- 1. PANTALLA DE BIENVENIDA -->
     <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
-            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" onerror="this.onerror=null;this.src='https://www.image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png';" alt="Logo FUNETEC" style="height: 128px; width: auto;" class="h-32 mx-auto mb-6 object-contain" />
+            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" class="h-32 mx-auto mb-6 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Institucional</h2>
             <p class="text-sm text-gray-500 mb-8">Seleccione el módulo al que desea acceder.</p>
-            
             <div class="space-y-4">
                 <button onclick="showScreen('verifyScreen')" class="w-full flex items-center justify-center gap-3 bg-red-600 text-white py-3.5 px-6 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -168,79 +104,67 @@
         </div>
     </div>
 
-    <!-- 2. PANTALLA DE VERIFICACIÓN EN LÍNEA (PÚBLICA) -->
+    <!-- 2. PANTALLA DE VERIFICACIÓN (DESCARGA DE PDF) -->
     <div id="verifyScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4 overflow-y-auto">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 relative my-8">
             <button onclick="showScreen('welcomeScreen')" class="absolute top-5 left-5 p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-100" title="Volver">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-
             <div class="text-center">
-                <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" onerror="this.onerror=null;this.src='https://www.image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png';" alt="Logo FUNETEC" style="height: 96px; width: auto;" class="h-24 mx-auto mb-4 object-contain" />
+                <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" class="h-24 mx-auto mb-4 object-contain" />
                 <h2 class="text-2xl font-bold text-gray-800 mb-1">Verificación de Certificados</h2>
-                <p class="text-xs text-gray-500 mb-6">Ingrese el número de documento del estudiante para validar y descargar sus certificados.</p>
+                <p class="text-xs text-gray-500 mb-6">Ingrese el número de documento para validar y descargar certificados.</p>
             </div>
-
             <div class="flex gap-2 mb-6">
                 <input type="text" id="verifyIdInput" placeholder="Ej: 1043131340" class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold" onkeydown="if(event.key==='Enter') verifyDocument()" />
-                <button onclick="verifyDocument()" class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition-colors shadow-md shrink-0">
-                    Consultar
-                </button>
+                <button onclick="verifyDocument()" class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition-colors shadow-md">Consultar</button>
             </div>
-
             <div id="verifyResultContainer" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
         </div>
     </div>
 
-    <!-- 3. PANTALLA DE LOGIN (FONDO 100% OPACO Y SIN PANEL CARGADO DETRÁS) -->
-    <div id="loginScreen" style="background-color: #f3f4f6;" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
+    <!-- 3. PANTALLA DE LOGIN (ADMIN) -->
+    <div id="loginScreen" style="background-color: #f3f4f6;" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 no-print">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center relative border border-gray-100">
             <button onclick="showScreen('welcomeScreen')" class="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-100" title="Volver">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            
-            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" onerror="this.onerror=null;this.src='https://www.image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png';" alt="Logo FUNETEC" style="height: 112px; width: auto;" class="h-28 mx-auto mb-4 mt-2 object-contain" />
+            <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" class="h-28 mx-auto mb-4 mt-2 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-1">Acceso Restringido</h2>
-            <p class="text-xs text-gray-500 mb-6">Ingrese la clave administrativa para gestionar certificados.</p>
-            
-            <input type="password" id="adminPassInput" placeholder="Contraseña administrativa" autocomplete="off" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium mb-3 text-center" onkeydown="if(event.key==='Enter') checkAdminLogin()" />
-            <p id="loginError" class="hidden text-xs text-red-600 font-semibold mb-3">Contraseña incorrecta. Intente nuevamente.</p>
-            
-            <button onclick="checkAdminLogin()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg">
-                Ingresar al Panel
-            </button>
+            <p class="text-xs text-gray-500 mb-6">Ingrese la clave administrativa.</p>
+            <input type="password" id="adminPassInput" placeholder="Contraseña" autocomplete="off" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium mb-3 text-center" onkeydown="if(event.key==='Enter') checkAdminLogin()" />
+            <p id="loginError" class="hidden text-xs text-red-600 font-semibold mb-3">Contraseña incorrecta.</p>
+            <button onclick="checkAdminLogin()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg">Ingresar al Panel</button>
         </div>
     </div>
 
-    <!-- 4. ÁREA DE TRABAJO PRINCIPAL (OCULTA Y SIN EL PANEL ADMINISTRATIVO EN EL DOM HASTA INICIAR SESIÓN) -->
-    <div id="mainWorkspace" class="offscreen-cert-mode">
+    <!-- 4. ÁREA DE TRABAJO PRINCIPAL (100% PANTALLA) -->
+    <div id="mainWorkspace" class="hidden h-screen w-full flex-col md:flex-row overflow-hidden bg-gray-200">
         
-        <!-- CONTENEDOR VACÍO: El panel administrativo se inyecta en memoria únicamente tras validar la contraseña -->
-        <div id="adminSidebarHost" class="no-print md:h-full"></div>
+        <!-- Contenedor del Panel (Altura 100% con su propio scroll) -->
+        <div id="adminSidebarHost" class="h-full"></div>
 
-        <!-- ÁREA DERECHA: PREVISUALIZACIÓN DEL CERTIFICADO -->
-        <div id="previewWrapper" class="flex-1 flex items-center justify-center p-4 md:p-8 overflow-auto bg-gray-300 relative min-h-screen md:min-h-0 md:h-full w-full">
+        <!-- Área Central (Vista Previa) -->
+        <div id="previewWrapper" class="flex-1 overflow-auto flex items-center justify-center p-4 md:p-8 relative min-h-screen md:min-h-0 bg-gray-300">
             
-            <!-- Botón flotante para Ocultar/Mostrar Panel (Solo visible tras iniciar sesión) -->
-            <button onclick="toggleSidebar()" id="toggleSidebarBtn" class="hidden no-print fixed top-4 right-4 z-30 bg-white text-gray-800 px-3.5 py-2 rounded-lg shadow-lg border border-gray-200 text-xs font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            <button onclick="toggleSidebar()" id="toggleSidebarBtn" class="hidden no-print fixed top-4 right-4 z-30 bg-white text-gray-800 px-3.5 py-2 rounded-lg shadow-lg border border-gray-200 text-xs font-bold items-center gap-2 hover:bg-gray-50 transition-colors">
                 <span id="toggleSidebarText">Ocultar Panel</span>
             </button>
 
-            <!-- LIENZO DEL CERTIFICADO (1056x816 Carta Horizontal) -->
-            <div id="certificateElement" class="font-sans-body">
-                
-                <!-- 1. CAPA DE MARCA DE AGUA (7x6 Cuadrícula detrás del contenido) -->
+            <!-- CERTIFICADO -->
+            <div id="certificateElement" class="font-sans-body bg-white relative">
+                <!-- 1. MARCA DE AGUA (FONDO PDF) -->
                 <div id="watermarkContainer" class="absolute inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
-                <!-- 2. CONTENEDOR DEL CÓDIGO QR (Superior Derecha) -->
+                <!-- 2. CÓDIGO QR -->
                 <div id="qrBoxContainer" style="position: absolute; top: 40px; right: 48px; width: 112px; height: 112px; z-index: 20;" class="flex items-center justify-center"></div>
 
-                <!-- 3. CABECERA INSTITUCIONAL -->
+                <!-- 3. CABECERA -->
                 <div class="text-center w-full relative z-10">
                     <div class="flex flex-col items-center">
                         <div class="mb-2 mt-1">
-                            <img id="mainCertLogo" src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" onerror="this.onerror=null;this.src='https://www.image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png';" alt="Logo FUNETEC" style="height: 160px; width: auto;" class="h-40 mx-auto object-contain" />
+                            <!-- Logo Nuevo, Tamaño Agrandado -->
+                            <img id="mainCertLogo" src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 160px; width: auto;" class="h-40 mx-auto object-contain" crossorigin="anonymous" />
                         </div>
                         <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-0 mt-0">Institución de Educación</h1>
                         <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-2 mt-0">para el Trabajo y Desarrollo Humano</h1>
@@ -249,109 +173,60 @@
                     </div>
                 </div>
 
-                <!-- 4. CUERPO DEL CERTIFICADO -->
+                <!-- 4. CUERPO -->
                 <div class="text-center w-full relative z-10 flex flex-col items-center flex-1 justify-center my-1">
                     <p class="text-base font-semibold text-gray-800 mb-1 tracking-wide">Hace constar que :</p>
-                    
                     <h2 id="displayName" class="font-serif-title font-bold text-[2.25rem] tracking-wider text-black mb-1 uppercase min-h-[2.6rem] leading-tight px-4"></h2>
-                    
-                    <p class="text-xs font-semibold text-gray-800 mb-2">
-                        Identificado con cédula de ciudadanía N.° <span id="displayId"></span>
-                    </p>
-                    
+                    <p class="text-xs font-semibold text-gray-800 mb-2">Identificado con cédula de ciudadanía N.° <span id="displayId"></span></p>
                     <p class="text-base font-semibold text-gray-800 mb-1">Aprobó el curso de:</p>
-                    
                     <h2 id="displayCourse" class="font-serif-title font-black text-[2rem] text-black uppercase mb-2 px-10 leading-tight min-h-[2.4rem]"></h2>
-                    
-                    <p class="text-xs font-medium text-gray-800 mb-0.5">
-                        Con una duración de ( <span id="displayHours">5</span> horas).
-                    </p>
-                    
-                    <p class="text-xs font-medium text-gray-800 mb-0.5">
-                        Dado en Barranquilla, a los <span id="displayDay">1</span> de <span id="displayMonth">Abril</span> de <span id="displayYear">2026</span>
-                    </p>
-                    
-                    <p id="displayValidity" class="text-xs font-semibold text-gray-800">
-                        ( vigencia 2 años )
-                    </p>
+                    <p class="text-xs font-medium text-gray-800 mb-0.5">Con una duración de ( <span id="displayHours"></span> horas).</p>
+                    <p class="text-xs font-medium text-gray-800 mb-0.5">Dado en Barranquilla, a los <span id="displayDay"></span> de <span id="displayMonth"></span> de <span id="displayYear"></span></p>
+                    <p id="displayValidity" class="text-xs font-semibold text-gray-800"></p>
                 </div>
 
-                <!-- 5. SECCIÓN DE FIRMAS -->
+                <!-- 5. FIRMAS -->
                 <div class="flex justify-between items-end px-12 mt-1 relative z-10 w-full max-w-4xl mx-auto">
                     <!-- Firma 1 -->
                     <div class="flex flex-col items-center w-64">
                         <div id="sign1Wrapper" class="h-20 w-56 relative flex items-end justify-center mb-1">
-                            <div id="sign1ImageContainer" class="w-full h-full flex items-end justify-center">
-                                <svg viewBox="0 0 220 80" class="w-full h-full" fill="none">
-                                    <text x="20" y="58" font-family="cursive, serif" font-style="italic" font-size="30" fill="#1f2937">Kelly Reyes U.</text>
-                                </svg>
-                            </div>
+                            <div id="sign1ImageContainer" class="w-full h-full flex items-end justify-center"></div>
                         </div>
                         <div class="w-full border-t border-gray-800 pt-1 text-center">
-                            <p id="displaySign1Name" class="font-bold text-[11px] text-black uppercase">KELLY PATRICIA REYES UTRIA</p>
-                            <p id="displaySign1Role" class="text-[10px] text-gray-800 font-medium">Directora</p>
+                            <p id="displaySign1Name" class="font-bold text-[11px] text-black uppercase"></p>
+                            <p id="displaySign1Role" class="text-[10px] text-gray-800 font-medium"></p>
                         </div>
                     </div>
-
                     <!-- Firma 2 -->
                     <div class="flex flex-col items-center w-64">
                         <div id="sign2Wrapper" class="h-20 w-56 relative flex items-end justify-center mb-1">
-                            <div id="sign2ImageContainer" class="w-full h-full flex items-end justify-center">
-                                <svg viewBox="0 0 220 80" class="w-full h-full" fill="none" stroke="#1f2937">
-                                    <path d="M 40,65 L 85,15 L 70,58 L 110,25 L 95,58 L 145,30 L 135,58 L 175,20 C 185,35 170,65 185,52" stroke-width="1.6" stroke-linecap="round" />
-                                </svg>
-                            </div>
+                            <div id="sign2ImageContainer" class="w-full h-full flex items-end justify-center"></div>
                         </div>
                         <div class="w-full border-t border-gray-800 pt-1 text-center">
-                            <p id="displaySign2Name" class="font-bold text-[11px] text-black uppercase">NEDIS FERNANDEZ BARRANCO</p>
-                            <p id="displaySign2Role" class="text-[10px] text-gray-800 font-medium">Coordinadora Académica</p>
+                            <p id="displaySign2Name" class="font-bold text-[11px] text-black uppercase"></p>
+                            <p id="displaySign2Role" class="text-[10px] text-gray-800 font-medium"></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- 6. PIE DE PÁGINA (DATOS DE CONTACTO + URL WEB) -->
+                <!-- 6. DATOS DE CONTACTO (PIE DE PÁGINA) -->
                 <div class="flex flex-wrap justify-between items-center px-2 mt-3 pt-2.5 border-t border-gray-100 text-[10.5px] font-semibold relative z-10 gap-2">
-                    <div id="footerEmailItem" class="flex items-center gap-1.5">
-                        <div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        </div>
-                        <span id="displayEmail" class="text-gray-800">funetec2022@gmail.com</span>
-                    </div>
-
-                    <div id="footerAddressItem" class="flex items-center gap-1.5">
-                        <div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        </div>
-                        <span id="displayAddress" class="text-gray-800">calle 47#18_24 Barranquilla</span>
-                    </div>
-
-                    <div id="footerPhoneItem" class="flex items-center gap-1.5">
-                        <div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        </div>
-                        <span id="displayPhone" class="text-gray-800">3046781679</span>
-                    </div>
-
-                    <div id="footerWebsiteItem" class="flex items-center gap-1.5">
-                        <div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                        </div>
-                        <span id="displayWebsite" class="text-gray-800">Para validacion del titulo ingresar a: www.funetec.com.co</span>
-                    </div>
+                    <div id="footerEmailItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div><span id="displayEmail" class="text-gray-800"></span></div>
+                    <div id="footerAddressItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div><span id="displayAddress" class="text-gray-800"></span></div>
+                    <div id="footerPhoneItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div><span id="displayPhone" class="text-gray-800"></span></div>
+                    <div id="footerWebsiteItem" class="flex items-center gap-1.5"><div class="bg-[#e53935] p-1.5 rounded-full text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><span id="displayWebsite" class="text-gray-800"></span></div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- LÓGICA DE APLICACIÓN Y FIREBASE -->
+    <!-- SCRIPT PRINCIPAL Y FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración Firebase compatible con entorno en la nube y despliegue externo
-        const defaultFirebaseConfig = {
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyD-FUNETEC-PORTAL-KEY",
             authDomain: "funetec-certificados.firebaseapp.com",
             projectId: "funetec-certificados",
@@ -359,11 +234,6 @@
             messagingSenderId: "100000000000",
             appId: "1:100000000000:web:abcdef123456"
         };
-
-        const firebaseConfig = typeof __firebase_config !== 'undefined'
-            ? JSON.parse(__firebase_config)
-            : defaultFirebaseConfig;
-
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'funetec-portal-app';
 
         let app, db, auth;
@@ -371,310 +241,27 @@
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-        } catch (err) {
-            console.error("Error inicializando Firebase:", err);
-        }
+        } catch (e) { console.error("Error Firebase:", e); }
 
-        // Estado privado de autenticación administrativa (no accesible ni modificable desde consola)
-        let isAdminAuthenticated = false;
-        const _kCodes = [65, 55, 102, 57, 75, 50, 109, 88, 56, 81, 52, 122, 84, 49, 66];
-
-        function verifyKey(input) {
-            if (!input || input.length !== _kCodes.length) return false;
-            for (let i = 0; i < _kCodes.length; i++) {
-                if (input.charCodeAt(i) !== _kCodes[i]) return false;
-            }
-            return true;
-        }
-
-        // URLs Institucionales
-        const WATERMARK_URL = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
-        const LOGO_URL = "https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png";
-
-        // Estado Global de la Aplicación
-        const state = {
-            name: '',
-            id: '',
-            course: '',
-            hours: '5',
-            day: '1',
-            month: 'Abril',
-            year: '2026',
-            validityType: 'aplica',
-            validityYears: '2',
-
-            sign1Name: 'KELLY PATRICIA REYES UTRIA',
-            sign1Role: 'Directora',
-            sign1Size: 100,
-            sign1X: 0,
-            sign1Y: 0,
-            sign1Image: '',
-
-            sign2Name: 'NEDIS FERNANDEZ BARRANCO',
-            sign2Role: 'Coordinadora Académica',
-            sign2Size: 100,
-            sign2X: 0,
-            sign2Y: 0,
-            sign2Image: '',
-
-            email: 'funetec2022@gmail.com',
-            address: 'calle 47#18_24 Barranquilla',
-            phone: '3046781679',
-            website: 'Para validacion del titulo ingresar a: www.funetec.com.co',
-
-            watermarkMode: 'grid',
-            watermarkOpacity: 5,
-            watermarkDataUrl: '',
-            logoDataUrl: '',
-
-            qrImage: '',
-            qrSize: 100,
-            qrX: 0,
-            qrY: 0,
-
-            dbRecords: []
-        };
-
-        // --- PLANTILLA DINÁMICA DEL PANEL ADMINISTRATIVO (Solo existe tras autenticar) ---
-        function getAdminSidebarTemplate() {
-            return `
-            <div id="sidebar" class="no-print w-full md:w-80 lg:w-96 bg-white border-r border-gray-200 p-5 shadow-xl flex flex-col z-20 md:h-full overflow-y-auto shrink-0">
-                <div class="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
-                    <h2 class="text-lg font-extrabold text-gray-800">Panel Administrativo</h2>
-                    <div class="flex items-center gap-3 text-xs font-semibold">
-                        <button onclick="resetStudentForm()" class="text-blue-600 hover:underline">Limpiar Datos</button>
-                        <button onclick="logoutAdmin()" class="text-red-600 hover:underline">Cerrar Sesión</button>
-                    </div>
-                </div>
-
-                <!-- Datos del Estudiante y Curso -->
-                <div class="space-y-3.5">
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Nombre Completo</label>
-                        <input type="text" id="inputName" placeholder="Ej: FRANKLIN TORRES JIMENEZ" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium uppercase transition-colors" />
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Cédula de Ciudadanía</label>
-                        <input type="text" id="inputId" placeholder="Ej: 73575155" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium transition-colors" />
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Nombre del Curso</label>
-                        <textarea id="inputCourse" rows="2" placeholder="Escriba el nombre del curso..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm font-medium uppercase transition-colors"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-2">
-                        <div class="col-span-4">
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Horas</label>
-                            <input type="number" id="inputHours" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
-                        </div>
-                        <div class="col-span-8">
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Vigencia</label>
-                            <div class="flex gap-1.5">
-                                <select id="inputValidityType" class="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs font-medium bg-white">
-                                    <option value="aplica">Aplica (Años)</option>
-                                    <option value="no caduca">No Caduca</option>
-                                    <option value="ocultar">Ocultar</option>
-                                </select>
-                                <input type="number" id="inputValidityYears" value="2" class="w-14 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium text-center" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Día</label>
-                            <input type="text" id="inputDay" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Mes</label>
-                            <input type="text" id="inputMonth" value="Abril" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Año</label>
-                            <input type="text" id="inputYear" value="2026" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN CÓDIGO QR (SUPERIOR DERECHA) -->
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-extrabold text-gray-800 uppercase flex items-center gap-1.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                            Código QR (Superior Derecha)
-                        </h3>
-                        <button onclick="clearQR()" class="text-[11px] text-red-600 font-semibold hover:underline">Quitar QR</button>
-                    </div>
-                    <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2.5">
-                        <div class="flex items-center gap-3">
-                            <div id="qrSidebarThumb" style="width: 48px; height: 48px;" class="w-12 h-12 rounded border border-gray-300 bg-white flex items-center justify-center shrink-0 overflow-hidden text-[9px] text-gray-400 text-center leading-tight p-1">
-                                Sin QR
-                            </div>
-                            <div class="flex-1 overflow-hidden">
-                                <label id="qrStatusLabel" class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Subir Imagen QR</label>
-                                <input type="file" id="uploadQR" accept="image/*" class="w-full text-xs text-gray-600" />
-                            </div>
-                        </div>
-                        <div class="space-y-1.5 pt-1">
-                            <div class="flex items-center justify-between text-[10px] font-semibold text-gray-600">
-                                <span>Tamaño (%)</span>
-                                <input type="range" id="inputQrSize" min="50" max="180" value="100" class="w-36 accent-red-600" />
-                            </div>
-                            <div class="flex items-center justify-between text-[10px] font-semibold text-gray-600">
-                                <span>Mover ↔ (X)</span>
-                                <input type="range" id="inputQrX" min="-150" max="150" value="0" class="w-36 accent-red-600" />
-                            </div>
-                            <div class="flex items-center justify-between text-[10px] font-semibold text-gray-600">
-                                <span>Mover ↕ (Y)</span>
-                                <input type="range" id="inputQrY" min="-100" max="150" value="0" class="w-36 accent-red-600" />
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-gray-500 leading-tight">💡 Puedes guardar un QR predeterminado con el botón azul al final del panel, o subir uno exclusivo por estudiante.</p>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN MARCA DE AGUA (FONDO PDF) -->
-                <div class="mt-5 pt-4 border-t border-gray-200">
-                    <h3 class="text-xs font-extrabold text-gray-800 uppercase mb-2">Marca de Agua (Fondo PDF)</h3>
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                        <div>
-                            <select id="inputWatermarkMode" class="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs font-medium bg-white">
-                                <option value="grid">Cuadrícula 7x6 (Todo el PDF)</option>
-                                <option value="single">Marca Central Única</option>
-                                <option value="none">Sin Marca de Agua</option>
-                            </select>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-[10px] font-semibold text-gray-600 mb-1">
-                                <span>Intensidad / Visibilidad</span>
-                                <span id="watermarkOpacityLabel">5%</span>
-                            </div>
-                            <input type="range" id="inputWatermarkOpacity" min="1" max="40" value="5" class="w-full accent-red-600" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN GENERACIÓN MASIVA (EXCEL) -->
-                <div class="mt-5 pt-4 border-t border-gray-200">
-                    <h3 class="text-xs font-extrabold text-gray-800 uppercase mb-1">Generación Masiva (Excel)</h3>
-                    <p class="text-[11px] text-gray-500 mb-2 leading-tight">Configura el curso arriba (o incluye una columna "Curso" en tu Excel) y sube el listado con "Nombre" y "Cedula".</p>
-                    <input type="file" id="uploadExcel" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-gray-800 cursor-pointer" />
-                </div>
-
-                <!-- BASE DE DATOS DE CERTIFICADOS -->
-                <div class="mt-5 pt-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-extrabold text-gray-800 uppercase">Base de Datos de Certificados</h3>
-                        <span id="dbCountBadge" class="text-[10px] font-bold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">0</span>
-                    </div>
-                    <input type="text" id="searchDBInput" placeholder="Buscar por nombre o cédula..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs mb-2.5 outline-none focus:ring-2 focus:ring-red-500" />
-                    <div id="dbListContainer" class="max-h-60 overflow-y-auto space-y-2 pr-1">
-                        <p class="text-xs text-gray-400 text-center py-4">Cargando registros...</p>
-                    </div>
-                </div>
-
-                <!-- CONFIGURACIÓN DE FIRMAS Y CONTACTO -->
-                <div class="mt-5 pt-4 border-t border-gray-200 space-y-4">
-                    <h3 class="text-xs font-extrabold text-gray-800 uppercase">Configuración de Firmas</h3>
-                    
-                    <!-- Firma 1 -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                        <p class="text-[10px] font-bold text-gray-500 uppercase">Firma Izquierda (Directora)</p>
-                        <input type="text" id="inputSign1Name" value="KELLY PATRICIA REYES UTRIA" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs font-semibold" placeholder="Nombre Firma 1" />
-                        <input type="text" id="inputSign1Role" value="Directora" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs" placeholder="Cargo Firma 1" />
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">Subir Imagen Firma 1 (PNG)</label>
-                            <input type="file" id="uploadSign1" accept="image/*" class="w-full text-[11px] text-gray-600" />
-                        </div>
-                        <div class="space-y-1 pt-1">
-                            <div class="flex justify-between text-[10px] text-gray-600"><span>Tamaño</span><input type="range" id="inputSign1Size" min="50" max="200" value="100" class="w-32 accent-gray-800" /></div>
-                            <div class="flex justify-between text-[10px] text-gray-600"><span>Mover X</span><input type="range" id="inputSign1X" min="-100" max="100" value="0" class="w-32 accent-gray-800" /></div>
-                            <div class="flex justify-between text-[10px] text-gray-600"><span>Mover Y</span><input type="range" id="inputSign1Y" min="-60" max="60" value="0" class="w-32 accent-gray-800" /></div>
-                        </div>
-                    </div>
-
-                    <!-- Firma 2 -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                        <p class="text-[10px] font-bold text-gray-500 uppercase">Firma Derecha (Coordinadora)</p>
-                        <input type="text" id="inputSign2Name" value="NEDIS FERNANDEZ BARRANCO" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs font-semibold" placeholder="Nombre Firma 2" />
-                        <input type="text" id="inputSign2Role" value="Coordinadora Académica" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs" placeholder="Cargo Firma 2" />
-                        <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">Subir Imagen Firma 2 (PNG)</label>
-                            <input type="file" id="uploadSign2" accept="image/*" class="w-full text-[11px] text-gray-600" />
-                        </div>
-                        <div class="space-y-1 pt-1">
-                            <div class="flex justify-between text-[10px] text-gray-600"><span>Tamaño</span><input type="range" id="inputSign2Size" min="50" max="200" value="100" class="w-32 accent-gray-800" /></div>
-                            <div class="flex justify-between text-[10px] text-gray-600"><span>Mover X</span><input type="range" id="inputSign2X" min="-100" max="100" value="0" class="w-32 accent-gray-800" /></div>
-                            <div class="flex justify-between text-[10px] text-gray-600"><span>Mover Y</span><input type="range" id="inputSign2Y" min="-60" max="60" value="0" class="w-32 accent-gray-800" /></div>
-                        </div>
-                    </div>
-
-                    <!-- Datos de Contacto -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-                        <p class="text-[10px] font-bold text-gray-500 uppercase">Datos de Contacto (Pie de Página)</p>
-                        <div>
-                            <label class="block text-[10px] text-gray-500">Correo Electrónico</label>
-                            <input type="text" id="inputEmail" value="funetec2022@gmail.com" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs" />
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-gray-500">Dirección Física</label>
-                            <input type="text" id="inputAddress" value="calle 47#18_24 Barranquilla" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs" />
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-gray-500">Teléfono / Celular</label>
-                            <input type="text" id="inputPhone" value="3046781679" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs" />
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-gray-500">URL Web</label>
-                            <input type="text" id="inputWebsite" value="Para validacion del titulo ingresar a: www.funetec.com.co" class="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs" />
-                        </div>
-                    </div>
-
-                    <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full bg-blue-600 text-white py-2.5 px-3 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow">
-                        GUARDAR CONFIGURACIÓN COMO PREDETERMINADA
-                    </button>
-                </div>
-
-                <!-- BOTONES DE ACCIÓN PRINCIPAL -->
-                <div class="mt-6 pt-4 border-t border-gray-200 space-y-2.5 pb-6">
-                    <button onclick="saveIndividualOnly()" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-red-700 transition-colors shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        GUARDAR EN LA NUBE (SOLO REGISTRO)
-                    </button>
-                    <button onclick="downloadIndividualPDF()" class="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-emerald-700 transition-colors shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        DESCARGAR PDF CON QR
-                    </button>
-                    <button onclick="printAndSaveIndividual()" class="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-xl font-bold text-xs hover:bg-gray-800 transition-colors shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        IMPRIMIR / GUARDAR PDF
-                    </button>
-                </div>
-            </div>`;
-        }
-
-        // --- SISTEMA DE DIÁLOGOS PERSONALIZADOS ---
+        // --- SISTEMA DE DIÁLOGOS Y ALERTAS (ANTI-BLOQUEOS) ---
         window.showNotice = function(message, title = "Aviso del Sistema") {
             return new Promise((resolve) => {
                 const modal = document.getElementById('customModal');
+                if(!modal) { alert(message); resolve(true); return; } // Respaldo nativo si falla el DOM
                 document.getElementById('customModalTitle').textContent = title;
                 document.getElementById('customModalMessage').textContent = message;
-                const cancelBtn = document.getElementById('customModalCancel');
+                document.getElementById('customModalCancel').classList.add('hidden');
                 const confirmBtn = document.getElementById('customModalConfirm');
-                cancelBtn.classList.add('hidden');
                 confirmBtn.textContent = "Aceptar";
                 modal.style.display = 'flex';
-
-                confirmBtn.onclick = () => {
-                    modal.style.display = 'none';
-                    resolve(true);
-                };
+                confirmBtn.onclick = () => { modal.style.display = 'none'; resolve(true); };
             });
         };
 
         window.showConfirm = function(message, title = "Confirmar Acción") {
             return new Promise((resolve) => {
                 const modal = document.getElementById('customModal');
+                if(!modal) { resolve(confirm(message)); return; }
                 document.getElementById('customModalTitle').textContent = title;
                 document.getElementById('customModalMessage').textContent = message;
                 const cancelBtn = document.getElementById('customModalCancel');
@@ -682,66 +269,49 @@
                 cancelBtn.classList.remove('hidden');
                 confirmBtn.textContent = "Sí, continuar";
                 modal.style.display = 'flex';
-
-                cancelBtn.onclick = () => {
-                    modal.style.display = 'none';
-                    resolve(false);
-                };
-                confirmBtn.onclick = () => {
-                    modal.style.display = 'none';
-                    resolve(true);
-                };
+                cancelBtn.onclick = () => { modal.style.display = 'none'; resolve(false); };
+                confirmBtn.onclick = () => { modal.style.display = 'none'; resolve(true); };
             });
         };
 
-        // --- NAVEGACIÓN DE PANTALLAS Y MONTAJE SEGURO DEL PANEL ---
-        window.showScreen = function(screenId) {
-            ['welcomeScreen', 'verifyScreen', 'loginScreen'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.add('hidden');
+        window.showScreen = function(id) {
+            ['welcomeScreen', 'verifyScreen', 'loginScreen', 'mainWorkspace'].forEach(sid => {
+                const el = document.getElementById(sid);
+                if (el) {
+                    if(sid === 'mainWorkspace' && id === sid) el.classList.remove('hidden', 'flex');
+                    else el.classList.add('hidden');
+                }
             });
-            if (screenId) {
-                const target = document.getElementById(screenId);
-                if (target) target.classList.remove('hidden');
+            const target = document.getElementById(id);
+            if (target) {
+                if(id === 'mainWorkspace') target.classList.remove('hidden');
+                else target.classList.remove('hidden');
             }
         };
 
-        function mountAdminPanel() {
-            const host = document.getElementById('adminSidebarHost');
-            const workspace = document.getElementById('mainWorkspace');
-            const toggleBtn = document.getElementById('toggleSidebarBtn');
-
-            host.innerHTML = getAdminSidebarTemplate();
-            // Se bloquea el scroll general en PC y se habilita el scroll independiente por columnas
-            workspace.className = "flex flex-col md:flex-row w-full min-h-screen md:h-screen bg-gray-200 md:overflow-hidden";
-            toggleBtn.classList.remove('hidden');
-
-            bindAdminEvents();
-            updateDisplay();
-            window.renderDBList(document.getElementById('searchDBInput')?.value || '');
-        }
-
-        function unmountAdminPanel() {
-            const host = document.getElementById('adminSidebarHost');
-            const workspace = document.getElementById('mainWorkspace');
-            const toggleBtn = document.getElementById('toggleSidebarBtn');
-
-            host.innerHTML = '';
-            workspace.className = "offscreen-cert-mode";
-            toggleBtn.classList.add('hidden');
-        }
-
+        // --- AUTENTICACIÓN Y PROTECCIÓN ---
+        let isAdminAuthenticated = false;
+        // Clave encriptada: A7f9K2mX8Q4zT1B
+        const _kCodes = [65,55,102,57,75,50,109,88,56,81,52,122,84,49,66]; 
+        
         window.checkAdminLogin = function() {
-            const passInput = document.getElementById('adminPassInput');
-            const pass = passInput.value.trim();
+            const pass = document.getElementById('adminPassInput').value.trim();
             const errEl = document.getElementById('loginError');
+            
+            let valid = false;
+            if(pass.length === _kCodes.length) {
+                valid = true;
+                for (let i = 0; i < _kCodes.length; i++) {
+                    if (pass.charCodeAt(i) !== _kCodes[i]) { valid = false; break; }
+                }
+            }
 
-            if (verifyKey(pass)) {
+            if (valid) {
                 isAdminAuthenticated = true;
                 errEl.classList.add('hidden');
-                passInput.value = '';
+                document.getElementById('adminPassInput').value = '';
                 mountAdminPanel();
-                window.showScreen(null);
+                window.showScreen('mainWorkspace');
             } else {
                 isAdminAuthenticated = false;
                 errEl.classList.remove('hidden');
@@ -750,269 +320,267 @@
 
         window.logoutAdmin = function() {
             isAdminAuthenticated = false;
-            unmountAdminPanel();
+            document.getElementById('adminSidebarHost').innerHTML = ''; // Destrucción total
             window.showScreen('welcomeScreen');
         };
 
-        window.toggleSidebar = function() {
-            if (!isAdminAuthenticated) return;
-            const sidebar = document.getElementById('sidebar');
-            const text = document.getElementById('toggleSidebarText');
-            if (!sidebar) return;
-            if (sidebar.classList.contains('hidden')) {
-                sidebar.classList.remove('hidden');
-                text.textContent = 'Ocultar Panel';
-            } else {
-                sidebar.classList.add('hidden');
-                text.textContent = 'Mostrar Panel';
-            }
+        // --- ESTADO GLOBAL ---
+        const state = {
+            name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026',
+            validityType: 'aplica', validityYears: '2',
+            sign1Name: 'KELLY PATRICIA REYES UTRIA', sign1Role: 'Directora', sign1Size: 100, sign1X: 0, sign1Y: 0, sign1Image: '',
+            sign2Name: 'NEDIS FERNANDEZ BARRANCO', sign2Role: 'Coordinadora Académica', sign2Size: 100, sign2X: 0, sign2Y: 0, sign2Image: '',
+            email: 'funetec2022@gmail.com', address: 'calle 47#18_24 Barranquilla', phone: '3046781679', website: 'Para validacion del titulo ingresar a: www.funetec.com.co',
+            watermarkMode: 'grid', watermarkOpacity: 5,
+            qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
+            dbRecords: []
         };
 
-        // --- PRECARGA DE IMÁGENES EN BASE64 PARA EXPORTACIÓN PDF PERFECTA ---
-        async function preloadImageAsDataUrl(url) {
+        const WATERMARK_URL = "https://cdn.phototourl.com/member/2026-10-20-ef41212c-c4c5-4f30-ac55-f7f9037b56ef.png";
+        let watermarkBase64 = '';
+
+        // --- FUNCIONES DE BASE DE DATOS OPTIMIZADAS Y CON TIMEOUT ---
+        function withTimeout(promise, ms = 8000) {
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error("Timeout: La conexión tardó demasiado.")), ms);
+                promise.then(val => { clearTimeout(timer); resolve(val); }).catch(err => { clearTimeout(timer); reject(err); });
+            });
+        }
+
+        async function saveFirestoreSafe(colName, docId, data) {
+            // Limpia variables undefined para evitar errores de Firebase
+            const cleanData = JSON.parse(JSON.stringify(data)); 
+            const path = doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
+            await withTimeout(setDoc(path, cleanData));
+        }
+        
+        async function getFirestoreSafe(colName, docId) {
+            const path = doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
+            return await withTimeout(getDoc(path));
+        }
+
+        async function getCollectionSafe(colName) {
+            const path = collection(db, 'artifacts', appId, 'public', 'data', colName);
+            return await withTimeout(getDocs(path));
+        }
+
+        // --- MONTAJE DEL PANEL Y ACTUALIZACIÓN ---
+        function mountAdminPanel() {
+            const host = document.getElementById('adminSidebarHost');
+            host.innerHTML = `
+            <div id="sidebar" class="no-print h-full w-full md:w-80 lg:w-[22rem] bg-white border-r border-gray-200 p-5 shadow-2xl overflow-y-auto flex flex-col z-20">
+                <div class="flex items-center justify-between mb-5 pb-3 border-b border-gray-100 shrink-0">
+                    <h2 class="text-lg font-extrabold text-gray-800">Panel Admin</h2>
+                    <div class="flex items-center gap-2 text-[10px] font-bold">
+                        <button onclick="resetStudentForm()" class="text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors">Limpiar Datos</button>
+                        <button onclick="logoutAdmin()" class="text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors">Salir</button>
+                    </div>
+                </div>
+
+                <div class="space-y-3.5 shrink-0">
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre Completo</label><input type="text" id="inputName" placeholder="Ej: FRANKLIN TORRES JIMENEZ" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold uppercase transition-colors" /></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cédula</label><input type="text" id="inputId" placeholder="Ej: 73575155" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold transition-colors" /></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Curso</label><textarea id="inputCourse" rows="2" placeholder="Ej: ATENCIÓN PSICOSOCIAL..." class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm font-bold uppercase transition-colors"></textarea></div>
+                    
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-4"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Horas</label><input type="number" id="inputHours" value="5" class="w-full px-3 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold" /></div>
+                        <div class="col-span-8"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Vigencia</label>
+                            <div class="flex gap-1">
+                                <select id="inputValidityType" class="flex-1 px-1 py-1.5 border border-gray-300 rounded outline-none text-[11px] font-bold bg-white"><option value="aplica">Aplica (Años)</option><option value="no caduca">No Caduca</option><option value="ocultar">Ocultar</option></select>
+                                <input type="number" id="inputValidityYears" value="2" class="w-12 px-1 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Día</label><input type="text" id="inputDay" value="1" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Mes</label><input type="text" id="inputMonth" value="Abril" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Año</label><input type="text" id="inputYear" value="2026" class="w-full px-2 py-1.5 border border-gray-300 rounded outline-none text-sm font-bold text-center" /></div>
+                    </div>
+                </div>
+
+                <!-- QR Y MARCA DE AGUA -->
+                <div class="mt-5 pt-4 border-t border-gray-200 shrink-0">
+                    <div class="flex justify-between items-center mb-1"><h3 class="text-[11px] font-extrabold text-gray-800 uppercase flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> CÓDIGO QR (SUPERIOR DERECHA)</h3><button onclick="clearQR()" class="text-[9px] font-bold text-red-500 hover:underline">Quitar QR</button></div>
+                    <div class="bg-red-50 p-2.5 rounded border border-red-100 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <div id="qrSidebarThumb" class="w-10 h-10 rounded border border-gray-300 bg-white flex items-center justify-center shrink-0 overflow-hidden text-[8px] text-gray-400 p-0.5 text-center leading-tight">Sin QR</div>
+                            <div class="flex-1 overflow-hidden"><label class="block text-[9px] font-bold text-gray-600 uppercase mb-0.5">SUBIR IMAGEN QR ÚNICA</label><input type="file" id="uploadQR" accept="image/*" class="w-full text-[10px] text-gray-600" /></div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500"><span>TAMAÑO (%)</span><input type="range" id="inputQrSize" min="50" max="180" value="100" class="w-28 accent-red-600" /></div>
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500"><span>MOVER ↔ (X)</span><input type="range" id="inputQrX" min="-150" max="150" value="0" class="w-28 accent-red-600" /></div>
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500"><span>MOVER ↕ (Y)</span><input type="range" id="inputQrY" min="-100" max="150" value="0" class="w-28 accent-red-600" /></div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-[11px] font-extrabold text-gray-800 uppercase mt-4 mb-1">Marca de Agua (Fondo PDF)</h3>
+                    <div class="bg-gray-50 p-2.5 rounded border border-gray-200">
+                        <select id="inputWatermarkMode" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px] font-bold bg-white mb-2"><option value="grid">Cuadrícula (Todo el PDF)</option><option value="single">Marca Central Única</option><option value="none">Sin Marca de Agua</option></select>
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 mb-0.5"><span>Intensidad / Visibilidad</span><span id="watermarkOpacityLabel">5%</span></div>
+                        <input type="range" id="inputWatermarkOpacity" min="1" max="40" value="5" class="w-full accent-blue-600" />
+                    </div>
+                </div>
+
+                <!-- CONFIGURACIÓN PREDETERMINADA -->
+                <div class="mt-5 pt-4 border-t border-gray-200 shrink-0 space-y-4">
+                    <!-- Contacto -->
+                    <div class="bg-gray-50 p-2.5 rounded border border-gray-200 space-y-1.5">
+                        <p class="text-[9px] font-extrabold text-gray-500 uppercase">DATOS DE CONTACTO (PIE DE PÁGINA)</p>
+                        <input type="text" id="inputEmail" value="funetec2022@gmail.com" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="Email" />
+                        <input type="text" id="inputAddress" value="calle 47#18_24 Barranquilla" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="Dirección" />
+                        <input type="text" id="inputPhone" value="3046781679" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="Teléfono" />
+                        <input type="text" id="inputWebsite" value="Para validacion de titulo ingresar a: www.funetec.com.co" class="w-full px-2 py-1 border border-gray-300 rounded text-[10px]" placeholder="URL Web" />
+                    </div>
+                    
+                    <!-- Botón de Guardar Default -->
+                    <button id="btnSaveSigns" onclick="saveSignatureConfig()" class="w-full bg-blue-600 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-blue-700 transition-colors shadow flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Guardar Configuración Como Predeterminada
+                    </button>
+                </div>
+
+                <!-- ACCIONES DE GUARDADO -->
+                <div class="mt-5 pt-4 border-t border-gray-200 shrink-0 space-y-2">
+                    <button onclick="saveIndividualOnly()" class="w-full bg-red-600 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-red-700 transition-colors shadow">GUARDAR EN LA NUBE (SOLO REGISTRO)</button>
+                    <button onclick="downloadIndividualPDF()" class="w-full bg-emerald-600 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-emerald-700 transition-colors shadow">DESCARGAR PDF CON QR</button>
+                    <button onclick="printAndSaveIndividual()" class="w-full bg-gray-900 text-white py-2.5 rounded text-[10px] font-black uppercase hover:bg-gray-800 transition-colors shadow">IMPRIMIR / GUARDAR PDF</button>
+                </div>
+
+                <!-- BASE DE DATOS LIGERA -->
+                <div class="mt-5 pt-4 border-t border-gray-200 flex-1 min-h-[200px] flex flex-col">
+                    <div class="flex justify-between items-center mb-2 shrink-0">
+                        <h3 class="text-[11px] font-extrabold text-gray-800 uppercase">Base de Datos</h3>
+                        <span id="dbCountBadge" class="text-[9px] font-bold bg-gray-200 px-1.5 py-0.5 rounded-full">0</span>
+                    </div>
+                    <input type="text" id="searchDBInput" placeholder="Buscar alumno..." class="w-full px-2 py-1.5 border border-gray-300 rounded text-[10px] font-bold mb-2 shrink-0 outline-none focus:border-red-500" />
+                    <div id="dbListContainer" class="flex-1 overflow-y-auto space-y-1.5 pr-1 pb-4"></div>
+                </div>
+            </div>`;
+            
+            document.getElementById('toggleSidebarBtn').classList.remove('hidden', 'flex');
+            document.getElementById('toggleSidebarBtn').classList.add('flex');
+            bindAdminEvents();
+            updateDisplay();
+            window.loadDBRecords();
+        }
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const text = document.getElementById('toggleSidebarText');
+            if (sidebar.classList.contains('hidden')) { sidebar.classList.remove('hidden'); text.textContent = 'Ocultar Panel'; }
+            else { sidebar.classList.add('hidden'); text.textContent = 'Mostrar Panel'; }
+        };
+
+        // --- MANEJO DE IMÁGENES Y DISPLAY ---
+        async function loadWatermarkBase64() {
             try {
-                const res = await fetch(url, { mode: 'cors' });
+                const res = await fetch(WATERMARK_URL, { mode: 'cors' });
                 const blob = await res.blob();
-                return await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-            } catch (e) {
-                return '';
-            }
+                const reader = new FileReader();
+                reader.onloadend = () => { watermarkBase64 = reader.result; window.renderWatermark(); };
+                reader.readAsDataURL(blob);
+            } catch(e) { console.warn("Error cargando marca de agua"); }
         }
 
-        async function initImagesForPDF() {
-            const wmBase64 = await preloadImageAsDataUrl(WATERMARK_URL);
-            if (wmBase64) {
-                state.watermarkDataUrl = wmBase64;
-                window.renderWatermark();
-            }
-            const logoBase64 = await preloadImageAsDataUrl(LOGO_URL);
-            if (logoBase64) {
-                state.logoDataUrl = logoBase64;
-                const mainLogo = document.getElementById('mainCertLogo');
-                if (mainLogo) mainLogo.src = logoBase64;
-            }
-        }
-
-        // --- RENDERIZADO DE MARCA DE AGUA (7x6) ---
         window.renderWatermark = function() {
             const container = document.getElementById('watermarkContainer');
             if (!container) return;
-
             const mode = state.watermarkMode || 'grid';
-            const opacityVal = Number(state.watermarkOpacity ?? 5);
-            const opacityDecimal = Math.max(0.01, Math.min(1, opacityVal / 100));
-            const src = state.watermarkDataUrl || WATERMARK_URL;
+            const opacity = Math.max(0.01, Math.min(1, Number(state.watermarkOpacity ?? 5) / 100));
+            const src = watermarkBase64 || WATERMARK_URL;
+            if (document.getElementById('watermarkOpacityLabel')) document.getElementById('watermarkOpacityLabel').textContent = `${state.watermarkOpacity}%`;
 
-            const labelEl = document.getElementById('watermarkOpacityLabel');
-            if (labelEl) labelEl.textContent = `${opacityVal}%`;
-
-            if (mode === 'none') {
-                container.innerHTML = '';
-                return;
-            }
-
+            if (mode === 'none') { container.innerHTML = ''; return; }
             if (mode === 'single') {
-                container.innerHTML = `
-                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: ${opacityDecimal};">
-                        <img src="${src}" alt="" style="width: 480px; height: auto; object-fit: contain;" />
-                    </div>
-                `;
+                container.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: ${opacity};"><img src="${src}" alt="" style="width: 480px; height: auto; object-fit: contain;" /></div>`;
                 return;
             }
-
+            
+            // 7x6 Grid
             let itemsHtml = '';
-            for (let i = 0; i < 42; i++) {
-                itemsHtml += `
-                    <div style="display: flex; align-items: center; justify-content: center;">
-                        <img src="${src}" alt="" style="width: 75px; height: auto; object-fit: contain; opacity: ${opacityDecimal};" />
-                    </div>
-                `;
-            }
-            container.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); width: 100%; height: 100%; padding: 18px 28px; gap: 6px;">
-                    ${itemsHtml}
-                </div>
-            `;
+            for (let i = 0; i < 42; i++) { itemsHtml += `<div style="display: flex; align-items: center; justify-content: center;"><img src="${src}" style="width: 75px; height: auto; object-fit: contain; opacity: ${opacity};" /></div>`; }
+            container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); width: 100%; height: 100%; padding: 18px 28px; gap: 6px;">${itemsHtml}</div>`;
         };
 
-        // --- RENDERIZADO DEL RECUADRO E IMAGEN QR ---
         window.renderQRBox = function() {
             const container = document.getElementById('qrBoxContainer');
             const thumb = document.getElementById('qrSidebarThumb');
-            const statusLabel = document.getElementById('qrStatusLabel');
             if (!container) return;
 
             const baseSize = 112;
             const scale = Number(state.qrSize || 100) / 100;
             const finalSize = Math.round(baseSize * scale);
-            const offsetX = Number(state.qrX || 0);
-            const offsetY = Number(state.qrY || 0);
-
-            container.style.width = `${finalSize}px`;
-            container.style.height = `${finalSize}px`;
-            container.style.right = `${48 - offsetX}px`;
-            container.style.top = `${40 + offsetY}px`;
+            container.style.width = `${finalSize}px`; container.style.height = `${finalSize}px`;
+            container.style.right = `${48 - Number(state.qrX || 0)}px`; container.style.top = `${40 + Number(state.qrY || 0)}px`;
 
             if (state.qrImage) {
-                container.innerHTML = `<img src="${state.qrImage}" alt="Código QR" style="width: 100%; height: 100%; object-fit: contain; display: block;" />`;
-                if (thumb) {
-                    thumb.innerHTML = `<img src="${state.qrImage}" alt="QR" class="w-full h-full object-contain" />`;
-                }
-                if (statusLabel) {
-                    statusLabel.textContent = "QR Activo (Cargado)";
-                    statusLabel.classList.remove('text-gray-700');
-                    statusLabel.classList.add('text-green-700');
-                }
+                container.innerHTML = `<img src="${state.qrImage}" style="width: 100%; height: 100%; object-fit: contain; display: block;" />`;
+                if(thumb) thumb.innerHTML = `<img src="${state.qrImage}" class="w-full h-full object-contain" />`;
             } else {
-                container.innerHTML = isAdminAuthenticated ? `
-                    <div onclick="document.getElementById('uploadQR')?.click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer text-gray-400 p-2 text-center hover:border-red-400 hover:text-red-500 transition-colors" title="Haz clic para subir tu imagen QR">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                        <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
-                    </div>
-                ` : '';
-                if (thumb) thumb.innerHTML = 'Sin QR';
-                if (statusLabel) {
-                    statusLabel.textContent = "Subir Imagen QR";
-                    statusLabel.classList.remove('text-green-700');
-                    statusLabel.classList.add('text-gray-700');
-                }
+                container.innerHTML = isAdminAuthenticated ? `<div onclick="document.getElementById('uploadQR')?.click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 p-2 text-center hover:border-red-400"><span class="text-[9px] font-bold leading-tight">ESPACIO QR</span></div>` : '';
+                if(thumb) thumb.innerHTML = 'Sin QR';
             }
         };
 
         window.clearQR = function() {
-            if (!isAdminAuthenticated) return;
-            state.qrImage = '';
-            state.qrSize = 100;
-            state.qrX = 0;
-            state.qrY = 0;
-            const qrInput = document.getElementById('uploadQR');
-            if (qrInput) qrInput.value = '';
-            window.renderQRBox();
-            updateDisplay();
+            state.qrImage = ''; state.qrSize = 100; state.qrX = 0; state.qrY = 0;
+            if(document.getElementById('uploadQR')) document.getElementById('uploadQR').value = '';
+            window.renderQRBox(); updateDisplay();
         };
 
-        // --- ACTUALIZACIÓN VISUAL DEL CERTIFICADO Y CONTROLES ---
         window.updateDisplay = function() {
-            const syncInput = (id, val) => {
-                const el = document.getElementById(id);
-                if (el && document.activeElement !== el) el.value = val ?? '';
-            };
+            const sync = (id, val) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = val || ''; };
+            
+            sync('inputName', state.name); sync('inputId', state.id); sync('inputCourse', state.course); sync('inputHours', state.hours);
+            sync('inputDay', state.day); sync('inputMonth', state.month); sync('inputYear', state.year);
+            sync('inputValidityType', state.validityType); sync('inputValidityYears', state.validityYears);
+            sync('inputEmail', state.email); sync('inputAddress', state.address); sync('inputPhone', state.phone); sync('inputWebsite', state.website);
+            sync('inputWatermarkMode', state.watermarkMode); sync('inputWatermarkOpacity', state.watermarkOpacity);
+            sync('inputQrSize', state.qrSize); sync('inputQrX', state.qrX); sync('inputQrY', state.qrY);
 
-            syncInput('inputName', state.name);
-            syncInput('inputId', state.id);
-            syncInput('inputCourse', state.course);
-            syncInput('inputHours', state.hours);
-            syncInput('inputDay', state.day);
-            syncInput('inputMonth', state.month);
-            syncInput('inputYear', state.year);
-            syncInput('inputValidityType', state.validityType);
-            syncInput('inputValidityYears', state.validityYears);
-
-            syncInput('inputSign1Name', state.sign1Name);
-            syncInput('inputSign1Role', state.sign1Role);
-            syncInput('inputSign1Size', state.sign1Size);
-            syncInput('inputSign1X', state.sign1X);
-            syncInput('inputSign1Y', state.sign1Y);
-
-            syncInput('inputSign2Name', state.sign2Name);
-            syncInput('inputSign2Role', state.sign2Role);
-            syncInput('inputSign2Size', state.sign2Size);
-            syncInput('inputSign2X', state.sign2X);
-            syncInput('inputSign2Y', state.sign2Y);
-
-            syncInput('inputEmail', state.email);
-            syncInput('inputAddress', state.address);
-            syncInput('inputPhone', state.phone);
-            syncInput('inputWebsite', state.website);
-
-            syncInput('inputWatermarkMode', state.watermarkMode);
-            syncInput('inputWatermarkOpacity', state.watermarkOpacity);
-
-            syncInput('inputQrSize', state.qrSize);
-            syncInput('inputQrX', state.qrX);
-            syncInput('inputQrY', state.qrY);
-
-            document.getElementById('displayName').textContent = state.name;
-            document.getElementById('displayId').textContent = state.id;
-            document.getElementById('displayCourse').textContent = state.course;
-            document.getElementById('displayHours').textContent = state.hours;
-            document.getElementById('displayDay').textContent = state.day;
-            document.getElementById('displayMonth').textContent = state.month;
-            document.getElementById('displayYear').textContent = state.year;
+            document.getElementById('displayName').textContent = state.name; document.getElementById('displayId').textContent = state.id;
+            document.getElementById('displayCourse').textContent = state.course; document.getElementById('displayHours').textContent = state.hours;
+            document.getElementById('displayDay').textContent = state.day; document.getElementById('displayMonth').textContent = state.month; document.getElementById('displayYear').textContent = state.year;
 
             const valEl = document.getElementById('displayValidity');
-            const yearsInput = document.getElementById('inputValidityYears');
-            if (state.validityType === 'ocultar') {
-                valEl.style.display = 'none';
-                if (yearsInput) yearsInput.style.display = 'none';
-            } else if (state.validityType === 'no caduca') {
-                valEl.style.display = 'block';
-                valEl.textContent = '( vigencia indefinida )';
-                if (yearsInput) yearsInput.style.display = 'none';
-            } else {
-                valEl.style.display = 'block';
-                valEl.textContent = `( vigencia ${state.validityYears} ${Number(state.validityYears) === 1 ? 'año' : 'años'} )`;
-                if (yearsInput) yearsInput.style.display = 'block';
-            }
+            if (state.validityType === 'ocultar') valEl.style.display = 'none';
+            else if (state.validityType === 'no caduca') { valEl.style.display = 'block'; valEl.textContent = '( vigencia indefinida )'; }
+            else { valEl.style.display = 'block'; valEl.textContent = `( vigencia ${state.validityYears} ${state.validityYears == 1 ? 'año' : 'años'} )`; }
 
-            document.getElementById('displaySign1Name').textContent = state.sign1Name;
-            document.getElementById('displaySign1Role').textContent = state.sign1Role;
-            const s1Container = document.getElementById('sign1ImageContainer');
-            s1Container.style.transform = `translate(${state.sign1X}px, ${state.sign1Y}px) scale(${state.sign1Size / 100})`;
-            if (state.sign1Image) {
-                s1Container.innerHTML = `<img src="${state.sign1Image}" alt="Firma 1" class="max-w-full h-full object-contain object-bottom" />`;
-            }
+            document.getElementById('displayEmail').textContent = state.email; document.getElementById('footerEmailItem').style.display = state.email ? 'flex' : 'none';
+            document.getElementById('displayAddress').textContent = state.address; document.getElementById('footerAddressItem').style.display = state.address ? 'flex' : 'none';
+            document.getElementById('displayPhone').textContent = state.phone; document.getElementById('footerPhoneItem').style.display = state.phone ? 'flex' : 'none';
+            document.getElementById('displayWebsite').textContent = state.website; document.getElementById('footerWebsiteItem').style.display = state.website ? 'flex' : 'none';
 
-            document.getElementById('displaySign2Name').textContent = state.sign2Name;
-            document.getElementById('displaySign2Role').textContent = state.sign2Role;
-            const s2Container = document.getElementById('sign2ImageContainer');
-            s2Container.style.transform = `translate(${state.sign2X}px, ${state.sign2Y}px) scale(${state.sign2Size / 100})`;
-            if (state.sign2Image) {
-                s2Container.innerHTML = `<img src="${state.sign2Image}" alt="Firma 2" class="max-w-full h-full object-contain object-bottom" />`;
-            }
-
-            document.getElementById('displayEmail').textContent = state.email;
-            document.getElementById('footerEmailItem').style.display = state.email ? 'flex' : 'none';
-
-            document.getElementById('displayAddress').textContent = state.address;
-            document.getElementById('footerAddressItem').style.display = state.address ? 'flex' : 'none';
-
-            document.getElementById('displayPhone').textContent = state.phone;
-            document.getElementById('footerPhoneItem').style.display = state.phone ? 'flex' : 'none';
-
-            document.getElementById('displayWebsite').textContent = state.website;
-            document.getElementById('footerWebsiteItem').style.display = state.website ? 'flex' : 'none';
-
-            window.renderWatermark();
-            window.renderQRBox();
+            window.renderWatermark(); window.renderQRBox();
         };
 
-        // --- COMPRESIÓN DE IMÁGENES ---
+        function bindAdminEvents() {
+            const map = { inputName:'name', inputId:'id', inputCourse:'course', inputHours:'hours', inputDay:'day', inputMonth:'month', inputYear:'year', inputValidityType:'validityType', inputValidityYears:'validityYears', inputEmail:'email', inputAddress:'address', inputPhone:'phone', inputWebsite:'website', inputWatermarkMode:'watermarkMode', inputWatermarkOpacity:'watermarkOpacity', inputQrSize:'qrSize', inputQrX:'qrX', inputQrY:'qrY' };
+            Object.keys(map).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', e => { state[map[id]] = e.target.value; updateDisplay(); });
+            });
+
+            const upQR = document.getElementById('uploadQR');
+            if (upQR) upQR.addEventListener('change', e => {
+                if (e.target.files[0]) compressImageFile(e.target.files[0], 450, base64 => { state.qrImage = base64; window.renderQRBox(); });
+            });
+
+            const searchDB = document.getElementById('searchDBInput');
+            if (searchDB) searchDB.addEventListener('input', e => window.renderDBList(e.target.value));
+        }
+
         function compressImageFile(file, maxSize, callback) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = ev => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let w = img.width;
-                    let h = img.height;
-                    if (w > maxSize || h > maxSize) {
-                        if (w > h) {
-                            h *= maxSize / w;
-                            w = maxSize;
-                        } else {
-                            w *= maxSize / h;
-                            h = maxSize;
-                        }
-                    }
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
+                    let w = img.width, h = img.height;
+                    if (w > maxSize || h > maxSize) { if (w > h) { h *= maxSize/w; w = maxSize; } else { w *= maxSize/h; h = maxSize; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                     callback(canvas.toDataURL('image/png'));
                 };
                 img.src = ev.target.result;
@@ -1020,192 +588,49 @@
             reader.readAsDataURL(file);
         }
 
-        // --- ENLACE DE EVENTOS DEL PANEL ADMINISTRATIVO ---
-        function bindAdminEvents() {
-            const bindMap = {
-                inputName: 'name',
-                inputId: 'id',
-                inputCourse: 'course',
-                inputHours: 'hours',
-                inputDay: 'day',
-                inputMonth: 'month',
-                inputYear: 'year',
-                inputValidityType: 'validityType',
-                inputValidityYears: 'validityYears',
-                inputSign1Name: 'sign1Name',
-                inputSign1Role: 'sign1Role',
-                inputSign1Size: 'sign1Size',
-                inputSign1X: 'sign1X',
-                inputSign1Y: 'sign1Y',
-                inputSign2Name: 'sign2Name',
-                inputSign2Role: 'sign2Role',
-                inputSign2Size: 'sign2Size',
-                inputSign2X: 'sign2X',
-                inputSign2Y: 'sign2Y',
-                inputEmail: 'email',
-                inputAddress: 'address',
-                inputPhone: 'phone',
-                inputWebsite: 'website',
-                inputWatermarkMode: 'watermarkMode',
-                inputWatermarkOpacity: 'watermarkOpacity',
-                inputQrSize: 'qrSize',
-                inputQrX: 'qrX',
-                inputQrY: 'qrY'
-            };
-
-            Object.keys(bindMap).forEach(inputId => {
-                const el = document.getElementById(inputId);
-                if (el) {
-                    el.addEventListener('input', (e) => {
-                        state[bindMap[inputId]] = e.target.value;
-                        updateDisplay();
-                    });
-                }
-            });
-
-            const uploadQR = document.getElementById('uploadQR');
-            if (uploadQR) {
-                uploadQR.addEventListener('change', (e) => {
-                    if (e.target.files && e.target.files[0]) {
-                        compressImageFile(e.target.files[0], 450, (base64) => {
-                            state.qrImage = base64;
-                            window.renderQRBox();
-                        });
-                    }
-                });
-            }
-
-            [1, 2].forEach(n => {
-                const upSign = document.getElementById(`uploadSign${n}`);
-                if (upSign) {
-                    upSign.addEventListener('change', (e) => {
-                        if (e.target.files && e.target.files[0]) {
-                            compressImageFile(e.target.files[0], 400, (base64) => {
-                                state[`sign${n}Image`] = base64;
-                                updateDisplay();
-                            });
-                        }
-                    });
-                }
-            });
-
-            const searchDB = document.getElementById('searchDBInput');
-            if (searchDB) {
-                searchDB.addEventListener('input', (e) => {
-                    window.renderDBList(e.target.value);
-                });
-            }
-
-            const uploadExcel = document.getElementById('uploadExcel');
-            if (uploadExcel) {
-                uploadExcel.addEventListener('change', handleExcelUpload);
-            }
-        }
-
-        // --- HELPERS DE FIREBASE CON RESPALDO AUTOMÁTICO DE RUTA ---
-        async function saveFirestoreDoc(colName, docId, data) {
-            try {
-                await setDoc(doc(db, colName, docId), data);
-            } catch (err) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, docId), data);
-            }
-        }
-
-        async function getFirestoreDoc(colName, docId) {
-            try {
-                return await getDoc(doc(db, colName, docId));
-            } catch (err) {
-                return await getDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, docId));
-            }
-        }
-
-        async function getFirestoreCollection(colName) {
-            try {
-                return await getDocs(collection(db, colName));
-            } catch (err) {
-                return await getDocs(collection(db, 'artifacts', appId, 'public', 'data', colName));
-            }
-        }
-
-        async function deleteFirestoreDoc(colName, docId) {
-            try {
-                await deleteDoc(doc(db, colName, docId));
-            } catch (err) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, docId));
-            }
-        }
-
-        // --- GUARDAR Y CARGAR CONFIGURACIÓN PREDETERMINADA ---
+        // --- SISTEMA DE GUARDADO CON PROTECCIÓN ANTI-CONGELAMIENTO ---
         window.saveSignatureConfig = async function() {
             if (!isAdminAuthenticated) return;
             const btn = document.getElementById('btnSaveSigns');
+            if(!btn) return;
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'Guardando...';
+            btn.innerHTML = 'GUARDANDO...';
             btn.disabled = true;
 
             try {
-                await saveFirestoreDoc("configuracion", "firmas", {
-                    sign1Name: state.sign1Name,
-                    sign1Role: state.sign1Role,
-                    sign1Size: state.sign1Size,
-                    sign1X: state.sign1X,
-                    sign1Y: state.sign1Y,
-                    sign1Image: state.sign1Image || '',
-
-                    sign2Name: state.sign2Name,
-                    sign2Role: state.sign2Role,
-                    sign2Size: state.sign2Size,
-                    sign2X: state.sign2X,
-                    sign2Y: state.sign2Y,
-                    sign2Image: state.sign2Image || '',
-
-                    email: state.email,
-                    address: state.address,
-                    phone: state.phone,
-                    website: state.website || '',
-                    watermarkMode: state.watermarkMode || 'grid',
-                    watermarkOpacity: Number(state.watermarkOpacity ?? 5),
-
-                    qrImage: state.qrImage || '',
-                    qrSize: Number(state.qrSize || 100),
-                    qrX: Number(state.qrX || 0),
-                    qrY: Number(state.qrY || 0)
-                });
-                await window.showNotice("¡Configuración guardada! Las firmas, contacto, marca de agua y el código QR se cargarán por defecto.");
+                // Objeto limpio garantizando que no hay valores undefined
+                const payload = {
+                    email: state.email || '', address: state.address || '', phone: state.phone || '', website: state.website || '',
+                    watermarkMode: state.watermarkMode || 'grid', watermarkOpacity: Number(state.watermarkOpacity) || 5,
+                    qrImage: state.qrImage || '', qrSize: Number(state.qrSize) || 100, qrX: Number(state.qrX) || 0, qrY: Number(state.qrY) || 0
+                };
+                await saveFirestoreSafe("configuracion", "firmas", payload);
+                await window.showNotice("¡Configuración guardada exitosamente!\nLos datos de contacto, marca de agua y el QR configurado se cargarán por defecto.");
             } catch (error) {
-                console.error("Error al guardar configuración:", error);
-                await window.showNotice("No se pudo guardar en la nube. Verifica tu conexión.");
+                console.error("Error al guardar:", error);
+                await window.showNotice("No se pudo guardar la configuración. Revisa tu conexión a internet o intenta nuevamente.");
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                const btnRecover = document.getElementById('btnSaveSigns');
+                if(btnRecover) { btnRecover.innerHTML = originalText; btnRecover.disabled = false; }
             }
         };
 
         window.loadSignatureConfig = async function() {
             try {
-                const docSnap = await getFirestoreDoc("configuracion", "firmas");
-                if (docSnap && docSnap.exists()) {
-                    const data = docSnap.data();
-                    const configKeys = [
-                        'sign1Name', 'sign1Role', 'sign1Size', 'sign1X', 'sign1Y', 'sign1Image',
-                        'sign2Name', 'sign2Role', 'sign2Size', 'sign2X', 'sign2Y', 'sign2Image',
-                        'email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity',
-                        'qrImage', 'qrSize', 'qrX', 'qrY'
-                    ];
-                    configKeys.forEach(k => {
-                        if (data[k] !== undefined) state[k] = data[k];
+                const snap = await getFirestoreSafe("configuracion", "firmas");
+                if (snap && snap.exists()) {
+                    const data = snap.data();
+                    ['email', 'address', 'phone', 'website', 'watermarkMode', 'watermarkOpacity', 'qrImage', 'qrSize', 'qrX', 'qrY'].forEach(k => {
+                        if (data[k] !== undefined && data[k] !== null) state[k] = data[k];
                     });
                     updateDisplay();
                 }
-            } catch (error) {
-                console.error("Error cargando configuración predeterminada:", error);
-            }
+            } catch (error) { console.warn("Error cargando config:", error); }
         };
 
-        // --- BASE DE DATOS DE CERTIFICADOS ---
+        // --- BASE DE DATOS Y CERTIFICADOS ---
         window.saveToDB = async function(studentName, studentId) {
             if (!isAdminAuthenticated || !studentName || !studentId) return;
-
             const isIndefinite = (state.validityType === 'no caduca' || state.validityType === 'ocultar');
             const expYear = parseInt(state.year) + parseInt(state.validityYears || 0);
             const safeCourse = (state.course || 'CURSO').replace(/[^a-zA-Z0-9]/g, '');
@@ -1214,96 +639,53 @@
             const existingRecord = state.dbRecords.find(r => r.docId === docId);
             const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
 
-            await saveFirestoreDoc("certificados", docId, {
-                id: String(studentId).trim(),
-                name: String(studentName).trim().toUpperCase(),
-                course: String(state.course).trim().toUpperCase(),
-                hours: String(state.hours),
-                day: String(state.day),
-                month: String(state.month),
-                year: String(state.year),
-                validityType: state.validityType,
-                validityYears: String(state.validityYears),
-                expYear: isIndefinite ? 9999 : expYear,
-                isIndefinite: isIndefinite,
-                qrImage: state.qrImage || '',
-                qrSize: Number(state.qrSize || 100),
-                qrX: Number(state.qrX || 0),
-                qrY: Number(state.qrY || 0),
-                dateAdded: dateAdded
-            });
+            const payload = {
+                id: String(studentId).trim(), name: String(studentName).trim().toUpperCase(), course: String(state.course).trim().toUpperCase(),
+                hours: String(state.hours), day: String(state.day), month: String(state.month), year: String(state.year),
+                validityType: state.validityType, validityYears: String(state.validityYears), expYear: isIndefinite ? 9999 : expYear, isIndefinite: isIndefinite,
+                qrImage: state.qrImage || '', qrSize: Number(state.qrSize) || 100, qrX: Number(state.qrX) || 0, qrY: Number(state.qrY) || 0, dateAdded: dateAdded
+            };
+            await saveFirestoreSafe("certificados", docId, payload);
         };
 
         window.loadDBRecords = async function() {
             try {
-                const snap = await getFirestoreCollection("certificados");
+                const snap = await getCollectionSafe("certificados");
                 const records = [];
-                snap.forEach(d => {
-                    records.push({ docId: d.id, ...d.data() });
-                });
+                snap.forEach(d => records.push({ docId: d.id, ...d.data() }));
                 records.sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || ''));
                 state.dbRecords = records;
                 window.renderDBList(document.getElementById('searchDBInput')?.value || '');
-            } catch (error) {
-                console.error("Error cargando certificados:", error);
-            }
+            } catch (error) { console.warn("Error listando certificados"); }
         };
 
         window.renderDBList = function(searchTerm = '') {
             const container = document.getElementById('dbListContainer');
             const badge = document.getElementById('dbCountBadge');
             if (!container || !badge) return;
-
             badge.textContent = state.dbRecords.length;
             const term = searchTerm.trim().toLowerCase();
+            const filtered = state.dbRecords.filter(r => (r.name||'').toLowerCase().includes(term) || (r.id||'').toLowerCase().includes(term) || (r.course||'').toLowerCase().includes(term));
 
-            const filtered = state.dbRecords.filter(r =>
-                (r.name || '').toLowerCase().includes(term) ||
-                (r.id || '').toLowerCase().includes(term) ||
-                (r.course || '').toLowerCase().includes(term)
-            );
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">No se encontraron registros.</p>`;
-                return;
-            }
+            if (filtered.length === 0) { container.innerHTML = `<p class="text-[10px] text-gray-400 text-center py-4">No hay registros.</p>`; return; }
 
             const grouped = {};
             filtered.forEach(r => {
-                const key = r.id || 'SIN_ID';
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        id: r.id,
-                        name: r.name,
-                        firstDocId: r.docId,
-                        courses: []
-                    };
-                }
-                grouped[key].courses.push(r);
+                const k = r.id || 'N/A';
+                if (!grouped[k]) grouped[k] = { id: r.id, name: r.name, firstDocId: r.docId, courses: [] };
+                grouped[k].courses.push(r);
             });
 
-            container.innerHTML = Object.values(grouped).map(user => `
-                <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                    <div class="flex justify-between items-center gap-1">
-                        <div onclick="loadFullRecord('${user.firstDocId}')" class="overflow-hidden pr-1 flex-1 cursor-pointer hover:text-red-600 transition-colors" title="Clic para cargar todos los datos de este estudiante">
-                            <p class="text-[11px] font-bold text-gray-800 truncate">${user.name}</p>
-                            <p class="text-[9.5px] text-gray-500 font-semibold truncate">C.C. ${user.id} <span class="text-gray-400 font-normal">(${user.courses.length} curso${user.courses.length > 1 ? 's' : ''})</span></p>
-                        </div>
-                        <button onclick="fillUserDataForNewCourse('${user.firstDocId}')" class="text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded hover:bg-blue-100 transition-colors shrink-0" title="Autocompletar nombre y cédula para un nuevo curso">
-                            + Curso
-                        </button>
+            container.innerHTML = Object.values(grouped).map(u => `
+                <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                    <div class="flex justify-between items-center cursor-pointer hover:bg-gray-200 p-1 -mx-1 -mt-1 rounded transition-colors group" onclick="fillUserData('${u.firstDocId}')">
+                        <div class="overflow-hidden pr-1"><p class="text-[10px] font-bold text-gray-800 truncate">${u.name}</p><p class="text-[9px] text-gray-500 font-semibold truncate">C.C. ${u.id} (${u.courses.length} curso)</p></div>
+                        <span class="text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded shrink-0 group-hover:bg-blue-100">+ Curso</span>
                     </div>
-                    <div class="mt-2 space-y-1">
-                        ${user.courses.map(c => `
-                            <div class="flex justify-between items-center text-[10px] text-gray-700 bg-white border border-gray-200 p-1.5 rounded hover:border-blue-400 transition-colors">
-                                <div onclick="loadFullRecord('${c.docId}')" class="truncate pr-2 flex-1 cursor-pointer hover:text-blue-600 flex items-center gap-1" title="Ver vista previa completa de este certificado">
-                                    <span>📘</span>
-                                    <span class="truncate font-medium">${c.course || '(Sin nombre)'}</span>
-                                    ${c.qrImage ? '<span class="bg-emerald-100 text-emerald-800 text-[8px] font-bold px-1 rounded shrink-0">QR</span>' : ''}
-                                </div>
-                                <button onclick="deleteRecord('${c.docId}')" class="text-gray-400 hover:text-red-600 transition-colors shrink-0 p-0.5" title="Eliminar este curso">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
+                    <div class="mt-1 space-y-1">
+                        ${u.courses.map(c => `
+                            <div class="flex justify-between items-center text-[9px] text-gray-700 bg-white border border-gray-200 p-1 rounded group/c hover:border-blue-400 cursor-pointer" onclick="loadFullRecord('${c.docId}')">
+                                <span class="truncate pr-1 flex-1 font-semibold group-hover/c:text-blue-600">📘 ${c.course||'Sin nombre'} ${c.qrImage ? '<span class="text-[7px] bg-green-100 text-green-700 px-1 rounded ml-1">QR</span>' : ''}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -1311,199 +693,87 @@
             `).join('');
         };
 
-        // Cargar TODOS los datos guardados de un certificado (incluyendo su QR)
         window.loadFullRecord = function(docId) {
-            const record = state.dbRecords.find(r => r.docId === docId);
-            if (!record) return;
-
-            state.name = record.name || '';
-            state.id = record.id || '';
-            state.course = record.course || '';
-            if (record.hours !== undefined) state.hours = record.hours;
-            if (record.day !== undefined) state.day = record.day;
-            if (record.month !== undefined) state.month = record.month;
-            if (record.year !== undefined) state.year = record.year;
-            if (record.validityType !== undefined) state.validityType = record.validityType;
-            if (record.validityYears !== undefined) state.validityYears = record.validityYears;
-
-            if (record.qrImage !== undefined) state.qrImage = record.qrImage;
-            state.qrSize = record.qrSize !== undefined ? record.qrSize : 100;
-            state.qrX = record.qrX !== undefined ? record.qrX : 0;
-            state.qrY = record.qrY !== undefined ? record.qrY : 0;
-
-            updateDisplay();
-            const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl) sidebarEl.scrollTo({ top: 0, behavior: 'smooth' });
+            const r = state.dbRecords.find(x => x.docId === docId);
+            if (!r) return;
+            ['name','id','course','hours','day','month','year','validityType','validityYears','qrImage','qrSize','qrX','qrY'].forEach(k => { if(r[k] !== undefined) state[k] = r[k]; });
+            updateDisplay(); document.getElementById('sidebar')?.scrollTo({top:0, behavior:'smooth'});
         };
 
-        window.fillUserDataForNewCourse = async function(docId) {
-            if (!isAdminAuthenticated) return;
-            const record = state.dbRecords.find(r => r.docId === docId);
-            if (!record) return;
-
-            state.name = record.name || '';
-            state.id = record.id || '';
-            state.course = '';
-            const qrInput = document.getElementById('uploadQR');
-            if (qrInput) qrInput.value = '';
-
-            await window.loadSignatureConfig();
-            window.renderQRBox();
-            updateDisplay();
-            const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl) sidebarEl.scrollTo({ top: 0, behavior: 'smooth' });
+        window.fillUserData = async function(docId) {
+            const r = state.dbRecords.find(x => x.docId === docId);
+            if (!r) return;
+            state.name = r.name || ''; state.id = r.id || ''; state.course = '';
+            await window.loadSignatureConfig(); updateDisplay(); document.getElementById('sidebar')?.scrollTo({top:0, behavior:'smooth'});
         };
 
         window.resetStudentForm = async function() {
-            if (!isAdminAuthenticated) return;
-            state.name = '';
-            state.id = '';
-            state.course = '';
-            const qrInput = document.getElementById('uploadQR');
-            if (qrInput) qrInput.value = '';
-
-            await window.loadSignatureConfig();
-            window.renderQRBox();
-            updateDisplay();
+            state.name = ''; state.id = ''; state.course = '';
+            await window.loadSignatureConfig(); updateDisplay();
         };
 
-        window.deleteRecord = async function(docId) {
-            if (!isAdminAuthenticated) return;
-            const ok = await window.showConfirm("¿Estás seguro de que deseas eliminar este certificado de la base de datos?");
-            if (!ok) return;
-            await deleteFirestoreDoc("certificados", docId);
-            await window.loadDBRecords();
-        };
-
-        // --- GUARDADO INDIVIDUAL, IMPRESIÓN Y EXPORTACIÓN PDF ---
-        async function checkDuplicateBeforeSave() {
-            const safeCourse = (state.course || 'CURSO').replace(/[^a-zA-Z0-9]/g, '');
+        async function checkDuplicate() {
+            const safeCourse = (state.course||'CURSO').replace(/[^a-zA-Z0-9]/g, '');
             const docId = `${String(state.id).trim()}_${safeCourse}`;
-            if (state.dbRecords.some(r => r.docId === docId)) {
-                return await window.showConfirm("⚠️ ESTE CURSO YA ESTÁ REGISTRADO ⚠️\n\nEl estudiante ya tiene este certificado guardado en la base de datos.\n\n¿Deseas actualizar el registro existente con los datos actuales?");
-            }
+            if(state.dbRecords.some(r => r.docId === docId)) return await window.showConfirm("Este curso ya está registrado.\n¿Deseas actualizar el registro existente con los datos actuales?");
             return true;
         }
 
         window.saveIndividualOnly = async function() {
-            if (!isAdminAuthenticated) return;
-            if (!state.name || !state.id || !state.course) {
-                await window.showNotice("Por favor ingrese el Nombre Completo, Cédula y Curso antes de guardar.");
-                return;
-            }
-            if (!(await checkDuplicateBeforeSave())) return;
-
+            if(!state.name || !state.id || !state.course) { await window.showNotice("Faltan datos (Nombre, Cédula o Curso)."); return; }
+            if(!(await checkDuplicate())) return;
             await window.saveToDB(state.name, state.id);
             await window.loadDBRecords();
-            await window.showNotice("¡Certificado y Código QR guardados exitosamente en la nube!");
+            await window.showNotice("¡Certificado y QR guardados exitosamente!");
         };
 
         window.printAndSaveIndividual = async function() {
-            if (!isAdminAuthenticated) return;
-            if (!state.name || !state.id || !state.course) {
-                await window.showNotice("Por favor ingrese el Nombre Completo, Cédula y Curso antes de imprimir.");
-                return;
-            }
-            if (!(await checkDuplicateBeforeSave())) return;
-
+            if(!state.name || !state.id || !state.course) { await window.showNotice("Faltan datos (Nombre, Cédula o Curso)."); return; }
+            if(!(await checkDuplicate())) return;
             await window.saveToDB(state.name, state.id);
             await window.loadDBRecords();
             window.print();
         };
 
-        async function generateCertificatePDFBlob() {
-            const certEl = document.getElementById('certificateElement');
-            const canvas = await html2canvas(certEl, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                width: 1056,
-                height: 816
-            });
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [1056, 816]
-            });
-            pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
+        async function getPDFBlob() {
+            const el = document.getElementById('certificateElement');
+            const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 1056, height: 816 });
+            const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [1056, 816] });
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1056, 816);
             return pdf;
         }
 
         window.downloadIndividualPDF = async function() {
-            if (!isAdminAuthenticated) return;
-            if (!state.name || !state.id || !state.course) {
-                await window.showNotice("Por favor ingrese el Nombre Completo, Cédula y Curso antes de descargar el PDF.");
-                return;
-            }
-
-            const overlay = document.getElementById('loadingOverlay');
-            document.getElementById('loadingTitle').textContent = "Generando PDF con QR...";
-            document.getElementById('loadingText').textContent = "Preparando el documento en alta resolución.";
-            overlay.style.display = 'flex';
-
+            if(!state.name || !state.id || !state.course) { await window.showNotice("Faltan datos."); return; }
+            const overlay = document.getElementById('loadingOverlay'); overlay.style.display = 'flex';
             try {
-                await window.saveToDB(state.name, state.id);
-                await window.loadDBRecords();
-                const pdf = await generateCertificatePDFBlob();
-                const cleanName = state.name.replace(/[^a-zA-Z0-9]/g, '_');
-                pdf.save(`Certificado_${cleanName}_${state.id}.pdf`);
-            } catch (err) {
-                console.error("Error generando PDF:", err);
-                await window.showNotice("Ocurrió un error al generar el archivo PDF.");
-            } finally {
-                overlay.style.display = 'none';
-            }
+                await window.saveToDB(state.name, state.id); await window.loadDBRecords();
+                const pdf = await getPDFBlob();
+                pdf.save(`Certificado_${state.name.replace(/[^a-zA-Z0-9]/g,'_')}_${state.id}.pdf`);
+            } catch (err) { await window.showNotice("Error generando PDF."); } finally { overlay.style.display = 'none'; }
         };
 
-        // --- VERIFICACIÓN PÚBLICA Y DESCARGA DE PDF PARA EL ESTUDIANTE ---
+        // --- VERIFICACIÓN PÚBLICA Y DESCARGA ---
         window.verifyDocument = async function() {
             const idInput = document.getElementById('verifyIdInput').value.trim();
             const container = document.getElementById('verifyResultContainer');
-            if (!idInput) {
-                container.innerHTML = `<p class="text-xs text-red-600 font-semibold text-center">Por favor ingrese un número de documento.</p>`;
-                return;
-            }
-
-            container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">Consultando base de datos...</p>`;
+            if (!idInput) { container.innerHTML = `<p class="text-xs text-red-600 font-bold text-center">Ingrese un documento.</p>`; return; }
+            container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">Consultando...</p>`;
             await window.loadDBRecords();
-
             const matches = state.dbRecords.filter(r => String(r.id).trim() === idInput);
+            
             if (matches.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                        <p class="text-sm font-bold text-red-700 mb-1">Documento no encontrado</p>
-                        <p class="text-xs text-red-600">No existen certificados registrados bajo el documento N.° ${idInput}.</p>
-                    </div>
-                `;
-                return;
+                container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center"><p class="text-sm font-bold text-red-700">No encontrado</p></div>`; return;
             }
-
-            const currentYear = new Date().getFullYear();
             container.innerHTML = `
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-2 text-center">
-                    <p class="text-xs font-bold text-emerald-800 uppercase">${matches[0].name}</p>
-                    <p class="text-[11px] text-emerald-700">C.C. ${matches[0].id} — ${matches.length} certificado(s) verificado(s)</p>
-                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-2 text-center"><p class="text-xs font-bold text-emerald-800 uppercase">${matches[0].name}</p></div>
                 ${matches.map(m => {
-                    const isActive = m.isIndefinite || Number(m.expYear) >= currentYear;
-                    return `
-                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
-                            <div class="flex justify-between items-start gap-2">
-                                <h4 class="text-xs font-extrabold text-gray-900 uppercase">${m.course}</h4>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}">
-                                    ${m.isIndefinite ? 'VIGENCIA INDEFINIDA' : (isActive ? 'VIGENTE' : 'VENCIDO')}
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-gray-600">Intensidad: <strong>${m.hours || '5'} horas</strong> | Año: <strong>${m.year || '2026'}</strong></p>
-                            <button onclick="downloadPublicVerifiedPDF('${m.docId}')" class="mt-1 w-full flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 px-4 rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                Descargar Certificado PDF
-                            </button>
-                        </div>
-                    `;
+                    const isActive = m.isIndefinite || Number(m.expYear) >= new Date().getFullYear();
+                    return `<div class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
+                        <div class="flex justify-between items-start gap-2"><h4 class="text-[11px] font-extrabold text-gray-900 uppercase">${m.course}</h4>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${isActive?'bg-emerald-100 text-emerald-800':'bg-red-100 text-red-700'}">${isActive?'VIGENTE':'VENCIDO'}</span></div>
+                        <button onclick="downloadPublicVerifiedPDF('${m.docId}')" class="mt-1 w-full flex justify-center gap-2 bg-red-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow">Descargar PDF</button>
+                    </div>`;
                 }).join('')}
             `;
         };
@@ -1511,123 +781,22 @@
         window.downloadPublicVerifiedPDF = async function(docId) {
             const record = state.dbRecords.find(r => r.docId === docId);
             if (!record) return;
-
-            const overlay = document.getElementById('loadingOverlay');
-            document.getElementById('loadingTitle').textContent = "Descargando Certificado...";
-            document.getElementById('loadingText').textContent = "Generando tu certificado oficial en formato PDF.";
-            overlay.style.display = 'flex';
-
+            const overlay = document.getElementById('loadingOverlay'); overlay.style.display = 'flex';
             try {
-                await window.loadSignatureConfig();
-                window.loadFullRecord(docId);
-                await new Promise(r => setTimeout(r, 250));
-                const pdf = await generateCertificatePDFBlob();
-                const cleanCourse = (record.course || 'Certificado').replace(/[^a-zA-Z0-9]/g, '_');
-                pdf.save(`Certificado_${record.id}_${cleanCourse}.pdf`);
-            } catch (err) {
-                console.error("Error descargando certificado público:", err);
-                await window.showNotice("No se pudo generar el PDF en este momento.");
-            } finally {
-                overlay.style.display = 'none';
-            }
+                await window.loadSignatureConfig(); window.loadFullRecord(docId); await new Promise(r => setTimeout(r, 250));
+                const pdf = await getPDFBlob(); pdf.save(`Certificado_${record.id}_${(record.course||'Curso').replace(/[^a-zA-Z0-9]/g,'_')}.pdf`);
+            } catch (err) { await window.showNotice("Error al generar PDF."); } finally { overlay.style.display = 'none'; }
         };
 
-        // --- GENERACIÓN MASIVA DESDE EXCEL ---
-        function handleExcelUpload(e) {
-            if (!isAdminAuthenticated) return;
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(ev) {
-                const overlay = document.getElementById('loadingOverlay');
-                const loadingText = document.getElementById('loadingText');
-                document.getElementById('loadingTitle').textContent = "Procesando Lote Masivo...";
-                overlay.style.display = 'flex';
-
-                try {
-                    const data = new Uint8Array(ev.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(firstSheet);
-
-                    if (!rows.length) {
-                        overlay.style.display = 'none';
-                        await window.showNotice("El archivo Excel está vacío.");
-                        return;
-                    }
-
-                    const zip = new JSZip();
-                    let count = 0;
-
-                    for (const row of rows) {
-                        const rowName = row.Nombre || row.NOMBRE || row.nombre || row.Estudiante || '';
-                        const rowId = row.Cedula || row.CEDULA || row.cedula || row.Documento || row.ID || '';
-                        const rowCourse = row.Curso || row.CURSO || row.curso || state.course;
-
-                        if (!rowName || !rowId || !rowCourse) continue;
-
-                        count++;
-                        loadingText.textContent = `Generando certificado ${count} de ${rows.length}: ${rowName}...`;
-
-                        state.name = String(rowName).trim().toUpperCase();
-                        state.id = String(rowId).trim();
-                        state.course = String(rowCourse).trim().toUpperCase();
-                        updateDisplay();
-
-                        await new Promise(r => setTimeout(r, 120));
-                        await window.saveToDB(state.name, state.id);
-
-                        const pdf = await generateCertificatePDFBlob();
-                        const pdfArrayBuffer = pdf.output('arraybuffer');
-                        const safeName = state.name.replace(/[^a-zA-Z0-9]/g, '_');
-                        zip.file(`${safeName}_${state.id}.pdf`, pdfArrayBuffer);
-                    }
-
-                    if (count > 0) {
-                        loadingText.textContent = "Comprimiendo archivo ZIP...";
-                        const zipBlob = await zip.generateAsync({ type: 'blob' });
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(zipBlob);
-                        link.download = `Certificados_FUNETEC_${new Date().toISOString().slice(0,10)}.zip`;
-                        link.click();
-                        await window.loadDBRecords();
-                        await window.showNotice(`¡Proceso completado! Se generaron y guardaron ${count} certificados.`);
-                    } else {
-                        await window.showNotice("No se encontraron filas válidas. Asegúrate de tener columnas 'Nombre' y 'Cedula' (y 'Curso' o haber escrito el curso arriba).");
-                    }
-                } catch (err) {
-                    console.error("Error procesando Excel:", err);
-                    await window.showNotice("Error al procesar el archivo Excel.");
-                } finally {
-                    overlay.style.display = 'none';
-                    e.target.value = '';
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // --- INICIALIZACIÓN DE LA APLICACIÓN ---
+        // --- INICIALIZACIÓN ---
         async function initApp() {
-            window.renderWatermark();
-            window.renderQRBox();
-            updateDisplay();
-            initImagesForPDF();
-
+            updateDisplay(); loadWatermarkBase64();
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.warn("Modo sin sesión activa o configuración personalizada:", e);
-            }
-
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth);
+            } catch(e) { console.warn("Error Auth", e); }
             await window.loadSignatureConfig();
-            await window.loadDBRecords();
         }
-
         initApp();
     </script>
 </body>
