@@ -466,11 +466,20 @@
                     </div>
 
                     <div class="text-center w-full relative z-10 flex flex-col items-center mt-4">
-                        <p class="text-[15px] text-black font-normal mb-4 mt-0">Hace constar que :</p>
-                        <h2 id="displayName" class="font-serif-title font-bold text-[2.4rem] tracking-wide text-black mb-4 mt-0 uppercase min-h-[3rem]"></h2>
+                        <p class="text-[15px] text-black font-normal mb-2 mt-0">Hace constar que :</p>
+                        
+                        <!-- Contenedor con altura fija para evitar que empuje el diseño hacia abajo -->
+                        <div style="height: 50px;" class="flex items-center justify-center w-full mb-2">
+                            <h2 id="displayName" class="font-serif-title font-bold text-[2.4rem] tracking-wide text-black uppercase m-0 leading-tight"></h2>
+                        </div>
+                        
                         <p class="text-[12px] text-black font-normal mb-4 mt-0">Identificado con cédula de ciudadanía N.° <span id="displayId"></span></p>
                         <p class="text-[15px] text-black font-normal mb-2 mt-0">Aprobó el curso de:</p>
-                        <h2 id="displayCourse" class="font-serif-title font-bold text-[2.1rem] tracking-wide text-black uppercase mb-4 mt-0 px-12 leading-tight min-h-[2.5rem]"></h2>
+                        
+                        <!-- Contenedor con altura fija para cursos largos -->
+                        <div style="height: 90px;" class="flex items-center justify-center w-full mb-2 px-12">
+                            <h2 id="displayCourse" class="font-serif-title font-bold text-[2.1rem] tracking-wide text-black uppercase m-0 leading-tight"></h2>
+                        </div>
                     </div>
 
                     <div class="flex justify-between items-end px-4 mt-6 w-full relative z-10 max-w-5xl mx-auto">
@@ -1258,6 +1267,21 @@
                 if(document.getElementById('display'+f)) document.getElementById('display'+f).textContent = state[k];
                 if(document.getElementById('input'+f)) document.getElementById('input'+f).value = state[k];
             });
+
+            // --- Ajuste dinámico de texto para evitar desbordes ---
+            const courseEl = document.getElementById('displayCourse');
+            if (courseEl && state.course) {
+                if (state.course.length > 70) courseEl.style.fontSize = '1.5rem';
+                else if (state.course.length > 40) courseEl.style.fontSize = '1.8rem';
+                else courseEl.style.fontSize = '2.1rem';
+            }
+
+            const nameEl = document.getElementById('displayName');
+            if (nameEl && state.name) {
+                if (state.name.length > 40) nameEl.style.fontSize = '1.9rem';
+                else nameEl.style.fontSize = '2.4rem';
+            }
+            // --------------------------------------------------------
 
             const webContainer = document.getElementById('websiteContainer');
             if (webContainer) {
