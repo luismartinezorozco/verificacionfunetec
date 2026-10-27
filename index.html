@@ -156,7 +156,6 @@
     <!-- 1. PANTALLA DE BIENVENIDA (PÚBLICA) -->
     <div id="welcomeScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 no-print p-4">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
-            <!-- Nuevo Logo Principal -->
             <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 128px; width: auto;" class="mx-auto mb-6 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Portal Institucional</h2>
             <p class="text-sm text-gray-500 mb-8">Seleccione el módulo al que desea acceder.</p>
@@ -183,14 +182,14 @@
             </button>
             
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Verificación en Línea</h2>
-            <p class="text-xs text-gray-500 mb-6">Ingrese el número de cédula del estudiante para consultar la validez de su certificado y descargarlo en PDF.</p>
+            <p class="text-xs text-gray-500 mb-6">Ingrese el número de documento del estudiante para consultar la validez de su certificado y descargarlo en PDF.</p>
             
             <form id="verifyForm" class="space-y-4">
                 <div class="relative">
-                    <input type="text" id="verifyIdInput" required placeholder="Número de Cédula" class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none text-sm transition-all" />
+                    <input type="text" id="verifyIdInput" required placeholder="Número de Documento" class="w-full px-4 py-3 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none text-sm transition-all" />
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-3.5 text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </div>
-                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar Cédula</button>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md">Consultar Documento</button>
             </form>
 
             <div id="verifyResultsContainer" class="hidden mt-6 pt-6 border-t border-gray-200"></div>
@@ -204,7 +203,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
             
-            <!-- Nuevo Logo Principal -->
             <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 112px; width: auto;" class="mx-auto mb-6 mt-2 object-contain" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Acceso Restringido</h2>
             <p class="text-xs text-gray-500 mb-6">Área exclusiva para personal administrativo.</p>
@@ -236,8 +234,16 @@
                     <input type="text" id="inputName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Cédula de Ciudadanía</label>
-                    <input type="text" id="inputId" name="id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Documento de Identidad</label>
+                    <div class="flex gap-2">
+                        <select id="inputIdType" name="idType" class="w-20 px-2 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium bg-white">
+                            <option value="CC">CC</option>
+                            <option value="NIT">NIT</option>
+                            <option value="PPT">PPT</option>
+                            <option value="TI">TI</option>
+                        </select>
+                        <input type="text" id="inputId" name="id" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm font-medium" />
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nombre del Curso</label>
@@ -351,7 +357,7 @@
                     </div>
                     <div class="mb-3">
                         <div class="relative">
-                            <input type="text" id="searchDBInput" oninput="renderDBList(this.value)" placeholder="Buscar nombre o cédula..." class="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-xs font-medium" />
+                            <input type="text" id="searchDBInput" oninput="renderDBList(this.value)" placeholder="Buscar nombre o documento..." class="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-xs font-medium" />
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="top: 10px;" class="absolute left-2.5 text-gray-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         </div>
                     </div>
@@ -439,13 +445,13 @@
             </button>
 
             <div id="documentScaleWrapper" class="absolute top-1/2 left-1/2 origin-center" style="width: 1056px; height: 816px;">
-                <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-12 pb-10 px-16 font-sans-body" style="width: 1056px; height: 816px;">
+                <div id="documentContainer" class="print-container relative bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col justify-between pt-10 pb-16 px-16 font-sans-body" style="width: 1056px; height: 816px;">
                     
                     <!-- Marca de Agua de Fondo (7x6) -->
                     <div id="watermarkContainer" class="absolute inset-0 z-[1] pointer-events-none overflow-hidden flex flex-col justify-between py-6 px-6 select-none"></div>
 
                     <!-- Código QR (Superior Derecha) -->
-                    <div id="qrImageContainer" style="width: 112px; height: 112px; top: 40px; right: 64px;" class="absolute top-10 right-16 w-28 h-28 flex items-center justify-center z-20 overflow-visible">
+                    <div id="qrImageContainer" style="width: 112px; height: 112px; top: 32px; right: 64px;" class="absolute top-8 right-16 w-28 h-28 flex items-center justify-center z-20 overflow-visible">
                         <div onclick="document.getElementById('uploadQR').click()" data-html2canvas-ignore="true" class="no-print w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer text-gray-400 p-2 text-center" title="Haz clic para subir tu imagen QR">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                             <span class="text-[9px] font-bold uppercase leading-tight">Espacio QR<br><span class="font-normal text-[8px]">(Clic para subir)</span></span>
@@ -454,30 +460,32 @@
 
                     <div class="text-center w-full relative z-10">
                         <div class="flex flex-col items-center">
-                            <div class="mb-4 mt-2">
-                                <!-- Nuevo Logo principal con height en 180px para verse más grande -->
+                            <div class="mb-2 mt-0">
+                                <!-- Logo principal grande levantado -->
                                 <img src="https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png" alt="Logo FUNETEC" style="height: 180px; width: auto;" class="mx-auto object-contain" crossorigin="anonymous" />
                             </div>
                             <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-0 mt-0">Institución de Educación</h1>
-                            <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-3 mt-0">para el Trabajo y Desarrollo Humano</h1>
+                            <h1 class="font-serif-title font-bold text-[2.2rem] leading-tight text-black mb-1 mt-0">para el Trabajo y Desarrollo Humano</h1>
                             <p class="text-[11px] text-gray-700 font-normal mb-0 mt-0">Aprobado por la Secretaría de Educación Distrital de Barranquilla mediante Resolución N° 06077 del 19 de octubre de 2023.</p>
                             <p class="text-[11px] text-gray-700 font-normal mt-0 mb-0">Educación para el Trabajo y Desarrollo Humano.</p>
                         </div>
                     </div>
 
-                    <div class="text-center w-full relative z-10 flex flex-col items-center mt-4">
+                    <div class="text-center w-full relative z-10 flex flex-col items-center mt-1">
                         <p class="text-[15px] text-black font-normal mb-2 mt-0">Hace constar que :</p>
                         
-                        <!-- Contenedor con altura fija para evitar que empuje el diseño hacia abajo -->
-                        <div style="height: 50px;" class="flex items-center justify-center w-full mb-2">
-                            <h2 id="displayName" class="font-serif-title font-bold text-[2.4rem] tracking-wide text-black uppercase m-0 leading-tight"></h2>
+                        <!-- Contenedor con altura fija y sin saltos -->
+                        <div style="height: 50px; min-height: 50px; max-height: 50px;" class="flex items-center justify-center w-full mb-2 overflow-visible">
+                            <h2 id="displayName" class="font-serif-title font-bold text-[2.4rem] tracking-wide text-black uppercase m-0 leading-none"></h2>
                         </div>
                         
-                        <p class="text-[12px] text-black font-normal mb-4 mt-0">Identificado con CC O TI N.° <span id="displayId"></span></p>
+                        <!-- Etiqueta de Documento Dinámico -->
+                        <p class="text-[12px] text-black font-normal mb-4 mt-0">Identificado con <span id="displayIdType" class="font-semibold">CC</span> N.° <span id="displayId"></span></p>
+                        
                         <p class="text-[15px] text-black font-normal mb-2 mt-0">Aprobó el curso de:</p>
                         
                         <!-- Contenedor con altura fija para cursos largos -->
-                        <div style="height: 90px;" class="flex items-center justify-center w-full mb-2 px-12">
+                        <div style="height: 90px; min-height: 90px; max-height: 90px;" class="flex items-center justify-center w-full mb-2 px-12 overflow-visible">
                             <h2 id="displayCourse" class="font-serif-title font-bold text-[2.1rem] tracking-wide text-black uppercase m-0 leading-tight"></h2>
                         </div>
                     </div>
@@ -508,7 +516,7 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap justify-between items-center px-6 mt-4 text-[11px] font-bold text-gray-800 relative z-10 pb-2">
+                    <div class="flex flex-wrap justify-between items-center px-6 mt-4 text-[11px] font-bold text-gray-800 relative z-10 pb-4">
                         <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M5.5 8C5.22 8 5 8.22 5 8.5v7c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-7c0-.28-.22-.5-.5-.5h-13zm0 1.5h13v.5l-6.5 4-6.5-4v-.5z" fill="white"/></svg><span id="displayEmail"></span></div>
                         <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" fill="#d32f2f"/></svg><span id="displayAddress"></span></div>
                         <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#d32f2f"/><path d="M16.9 14.44c-.78 0-1.55-.12-2.28-.36a.88.88 0 0 0-.89.21l-1.4 1.4c-1.83-.93-3.32-2.42-4.25-4.25l1.4-1.4a.88.88 0 0 0 .21-.89 6.8 6.8 0 0 1-.36-2.28c0-.49-.4-.88-.88-.88H5.38C4.9 6 4.5 6.4 4.5 6.88 4.5 13.63 10 19.12 16.75 19.12c.49 0 .88-.4.88-.88v-2.92c0-.48-.4-.88-.88-.88z" fill="white"/></svg><span id="displayPhone"></span></div>
@@ -525,7 +533,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDocs, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Función para descongelar peticiones que se queden trabadas
         const timeoutPromise = (ms, promise) => {
             return new Promise((resolve, reject) => {
                 const timeoutId = setTimeout(() => reject(new Error("Timeout: La conexión tardó demasiado, verifica tu red.")), ms);
@@ -557,7 +564,7 @@
         const LOGO_URL_FALLBACK = "https://image2url.com/r2/default/images/1792703310490-f358e5ee-bab1-4d8c-b63d-17dc37abd416.png";
 
         const state = { 
-            name: '', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
+            name: '', idType: 'CC', id: '', course: '', hours: '5', day: '1', month: 'Abril', year: '2026', 
             validityType: 'aplica', validityYears: '2', 
             qrImage: '', qrSize: 100, qrX: 0, qrY: 0,
             watermarkMode: 'grid', watermarkOpacity: 5, watermarkProcessedSrc: '',
@@ -666,8 +673,6 @@
                     watermarkMode: state.watermarkMode || 'grid', watermarkOpacity: Number(state.watermarkOpacity || 5),
                     qrImage: state.qrImage || '', qrSize: Number(state.qrSize || 100), qrX: Number(state.qrX || 0), qrY: Number(state.qrY || 0)
                 };
-
-                // Uso de protección timeout para evitar descongelamiento
                 await timeoutPromise(8000, setDoc(doc(db, "configuracion", "firmas"), payload));
                 await window.showNotice("¡Configuración predeterminada guardada! Las firmas, el QR predeterminado, la marca de agua y datos de contacto cargarán automáticamente la próxima vez que entres o limpies datos.");
             } catch(error) {
@@ -807,7 +812,6 @@
                 img.onerror = () => tryLoadCORS(index + 1);
                 img.src = currentUrl;
             };
-
             tryLoadCORS(0);
         };
 
@@ -855,6 +859,7 @@
                 const dateAdded = existingRecord ? existingRecord.dateAdded : new Date().toISOString();
 
                 await timeoutPromise(8000, setDoc(doc(db, "certificados", docId), {
+                    idType: state.idType || 'CC',
                     id: String(studentId).trim(),
                     name: String(studentName).trim().toUpperCase(),
                     course: String(state.course || '').trim().toUpperCase(),
@@ -952,12 +957,13 @@
 
             container.innerHTML = Object.values(grouped).map(user => {
                 const latestDocId = user.courses[0].docId;
+                const latestIdType = user.courses[0].idType || 'CC';
                 return `
                 <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
                     <div class="flex justify-between items-center cursor-pointer hover:bg-blue-50 p-1.5 rounded transition-colors group" onclick="previewCertificate('${latestDocId}')" title="Clic para cargar todos los datos guardados del estudiante">
                         <div class="overflow-hidden pr-2 flex-1">
                             <p class="text-[11px] font-bold text-gray-800 group-hover:text-blue-700 truncate m-0" title="${user.name}">${user.name}</p>
-                            <p class="text-[9px] text-gray-500 font-semibold truncate m-0">C.C. ${user.id} <span class="text-gray-400 font-normal">(${user.courses.length} curso${user.courses.length > 1 ? 's' : ''})</span></p>
+                            <p class="text-[9px] text-gray-500 font-semibold truncate m-0">${latestIdType} ${user.id} <span class="text-gray-400 font-normal">(${user.courses.length} curso${user.courses.length > 1 ? 's' : ''})</span></p>
                         </div>
                         <button onclick="event.stopPropagation(); fillUserDataForNewCourse('${latestDocId}')" class="text-[9px] bg-white border border-gray-300 text-gray-700 font-semibold px-2 py-1 rounded shadow-sm shrink-0" title="Cargar datos del alumno para añadir otro curso nuevo">
                             + Curso
@@ -997,6 +1003,7 @@
 
             state.name = record.name || '';
             state.id = record.id || '';
+            state.idType = record.idType || 'CC';
             state.course = '';
             state.qrImage = '';
             const qrInput = document.getElementById('uploadQR');
@@ -1024,6 +1031,7 @@
 
             state.name = record.name ?? '';
             state.id = record.id ?? '';
+            state.idType = record.idType || 'CC';
             state.course = record.course ?? '';
             if (record.hours !== undefined && record.hours !== '') state.hours = record.hours;
             if (record.day !== undefined && record.day !== '') state.day = record.day;
@@ -1072,7 +1080,7 @@
             
             document.getElementById('sidebar').scrollTo({ top: 0, behavior: 'smooth' });
             
-            const highlightIds = ['inputName', 'inputId', 'inputCourse', 'inputHours', 'inputDay', 'inputMonth', 'inputYear', 'inputValidityType', 'inputValidityYears'];
+            const highlightIds = ['inputName', 'inputId', 'inputIdType', 'inputCourse', 'inputHours', 'inputDay', 'inputMonth', 'inputYear', 'inputValidityType', 'inputValidityYears'];
             highlightIds.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('bg-blue-100');
@@ -1116,10 +1124,12 @@
                     querySnapshot.forEach((doc) => results.push(doc.data()));
                     window.verifiedCertificates = results;
 
+                    const activeIdType = results[0].idType || 'CC';
+
                     let html = `
                         <div class="mb-4">
                             <h3 class="text-lg font-bold text-gray-900 leading-tight m-0">${results[0].name}</h3>
-                            <p class="text-xs font-semibold text-gray-500 mt-1 mb-0">C.C. ${results[0].id}</p>
+                            <p class="text-xs font-semibold text-gray-500 mt-1 mb-0">${activeIdType} ${results[0].id}</p>
                         </div>
                         <div class="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
                     `;
@@ -1154,7 +1164,7 @@
                         <div class="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-red-500 mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                             <p class="text-sm font-bold text-red-800 m-0">No se encontraron registros</p>
-                            <p class="text-xs text-red-600 mt-1 mb-0">Verifique el número de cédula ingresado.</p>
+                            <p class="text-xs text-red-600 mt-1 mb-0">Verifique el número de documento ingresado.</p>
                         </div>
                     `;
                 }
@@ -1181,6 +1191,7 @@
 
                 state.name = record.name ?? '';
                 state.id = record.id ?? '';
+                state.idType = record.idType || 'CC';
                 state.course = record.course ?? '';
                 if (record.hours !== undefined && record.hours !== '') state.hours = record.hours;
                 if (record.day !== undefined && record.day !== '') state.day = record.day;
@@ -1261,7 +1272,7 @@
         });
 
         function updateDisplay() {
-            const fields = ['Name', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone', 'Website'];
+            const fields = ['Name', 'IdType', 'Id', 'Course', 'Hours', 'Day', 'Month', 'Year', 'Sign1Name', 'Sign1Role', 'Sign2Name', 'Sign2Role', 'Email', 'Address', 'Phone', 'Website'];
             fields.forEach(f => {
                 const k = f.charAt(0).toLowerCase() + f.slice(1);
                 if(document.getElementById('display'+f)) document.getElementById('display'+f).textContent = state[k];
@@ -1570,7 +1581,8 @@
 
                 const headers = rows[0].map(h => String(h).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
                 const nameIdx = headers.findIndex(h => h.includes('nombre'));
-                const idIdx = headers.findIndex(h => h.includes('cedula') || h.includes('identificacion'));
+                const idIdx = headers.findIndex(h => h.includes('cedula') || h.includes('identificacion') || h.includes('documento'));
+                const typeIdx = headers.findIndex(h => h.includes('tipo'));
                 const courseIdx = headers.findIndex(h => h.includes('curso'));
 
                 if(nameIdx === -1) {
@@ -1587,13 +1599,14 @@
                         const name = String(row[nameIdx]).trim();
                         const id = idIdx !== -1 && row[idIdx] ? String(row[idIdx]).trim() : '';
                         const rowCourse = courseIdx !== -1 && row[courseIdx] ? String(row[courseIdx]).trim() : state.course;
+                        const rowIdType = typeIdx !== -1 && row[typeIdx] ? String(row[typeIdx]).trim().toUpperCase() : state.idType;
 
                         const uniqueKey = `${id}_${rowCourse}`;
                         
                         if (studentMap.has(uniqueKey)) {
                             duplicatesCount++;
                         } else {
-                            studentMap.set(uniqueKey, { name, id, course: rowCourse });
+                            studentMap.set(uniqueKey, { name, id, idType: rowIdType, course: rowCourse });
                         }
                     }
                 }
@@ -1638,6 +1651,7 @@
             const zip = new window.JSZip();
             const originalName = state.name;
             const originalId = state.id;
+            const originalIdType = state.idType;
             const originalCourse = state.course;
             
             try {
@@ -1647,6 +1661,7 @@
 
                     state.name = student.name;
                     state.id = student.id;
+                    state.idType = student.idType || originalIdType;
                     state.course = student.course || originalCourse;
                     updateDisplay();
                     
@@ -1669,6 +1684,7 @@
             } finally {
                 state.name = originalName;
                 state.id = originalId;
+                state.idType = originalIdType;
                 state.course = originalCourse;
                 updateDisplay();
                 overlay.classList.add('hidden');
@@ -1682,6 +1698,7 @@
             const overlay = document.getElementById('loadingOverlay');
             const loadText = document.getElementById('loadingText');
             const originalCourse = state.course;
+            const originalIdType = state.idType;
             overlay.classList.remove('hidden');
             
             try {
@@ -1690,6 +1707,7 @@
                     loadText.textContent = `Subiendo a la nube: ${i + 1} de ${state.bulkStudents.length}...`;
                     
                     state.course = student.course || originalCourse;
+                    state.idType = student.idType || originalIdType;
                     await window.saveToDB(student.name, student.id);
                 }
                 await window.showNotice("¡Todos los certificados masivos se subieron exitosamente a la nube!");
@@ -1698,6 +1716,7 @@
                 await window.showNotice("Hubo un error subiendo los archivos a la nube. Verifica la consola.");
             } finally {
                 state.course = originalCourse;
+                state.idType = originalIdType;
                 overlay.classList.add('hidden');
                 await window.loadDBRecords();
             }
